@@ -1,0 +1,43 @@
+{
+  "name": "2dai-mcp-server",
+  "version": "1.1.0",
+  "description": "MCP server for 2DAI — let Claude, Cursor, Cline and Windsurf generate images and video, upload references and organise your cloud drive on your own 2DAI account.",
+  "type": "module",
+  "bin": {
+    "2dai-mcp-server": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint:stdout": "! grep -rnE 'console\\.(log|info|debug|dir|table)\\(' src/ || (echo 'stdout write in src/ corrupts the stdio JSON-RPC stream' && exit 1)",
+    "prepublishOnly": "npm run lint:stdout && npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "2dai",
+    "image-generation",
+    "video-generation",
+    "ai"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "2dai-cloud-sdk": "^2.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.3"
+  }
+}

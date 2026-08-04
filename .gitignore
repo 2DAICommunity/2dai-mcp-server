@@ -1,0 +1,11 @@
+node_modules/
+dist/
+*.log
+*.tgz
+.DS_Store
+
+# Never publish or commit credentials
+.npmrc
+.env
+.env.*
+*.local
