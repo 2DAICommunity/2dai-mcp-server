@@ -31,13 +31,14 @@ export const registerGetStats: RegisterTool = (server, ctx) => {
         'the JSON block has the detail. Numbers come from a server-side cache — its age is reported, ' +
         'and a stale cache refreshes itself in the background. Costs nothing.',
       inputSchema: {
-        days: z.union([z.literal(30), z.literal(90)]).optional()
+        days: z.number().optional()
           .describe('Window for the generation numbers: 30 (default) or 90 days.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async (args, extra) => guard(async () => {
       const days = args.days ?? 30;
+      if (days !== 30 && days !== 90) throw new Error('days must be 30 or 90.');
       const [overview, generations, top] = await Promise.all([
         ctx.client.stats.overview(extra.signal),
         ctx.client.stats.generations({ days, signal: extra.signal }),

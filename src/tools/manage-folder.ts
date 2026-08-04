@@ -31,10 +31,14 @@ export const registerManageFolder: RegisterTool = (server, ctx) => {
         description: z.string().max(300).optional().describe('Folder description (create/rename).'),
         trashContents: z.boolean().optional().describe('delete only — send the folder\'s creations to trash instead of detaching them.'),
         favorite: z.boolean().optional().describe('set-favorite only — true to star the folder, false to unstar.'),
-        posterCreationId: z.string().length(32).nullable().optional()
-          .describe('set-poster only — the creation to pin as the folder cover, or null to clear it.'),
-        groupId: z.string().nullable().optional()
-          .describe('The sidebar group: target for move-to-group (null detaches), the group to rename/delete, or where "create" files the new folder.'),
+        // Plain string types only — some hosts render tool schemas through the
+        // model's own prompt template, and a JSON-Schema type array (the
+        // nullable form) breaks naive templates. "none" is the clear/detach
+        // sentinel instead of null.
+        posterCreationId: z.string().optional()
+          .describe('set-poster only — the creation to pin as the folder cover, or "none" to clear it.'),
+        groupId: z.string().optional()
+          .describe('The sidebar group: target for move-to-group ("none" detaches), the group to rename/delete, or where "create" files the new folder.'),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     },
@@ -105,25 +109,30 @@ export const registerManageFolder: RegisterTool = (server, ctx) => {
       }
       if (args.action === 'set-poster') {
         if (args.posterCreationId === undefined) {
-          throw new Error('set-poster needs "posterCreationId" — a creation id to pin, or null to clear the cover.');
+          throw new Error('set-poster needs "posterCreationId" — a creation id to pin, or "none" to clear the cover.');
+        }
+        const poster = args.posterCreationId === 'none' ? null : args.posterCreationId;
+        if (poster !== null && !/^[0-9a-f]{32}$/i.test(poster)) {
+          throw new Error('posterCreationId must be a 32-char creation id (from list_creations), or "none".');
         }
         const folder = await ctx.client.folders.update(
           args.folderId,
-          { posterCreationId: args.posterCreationId },
+          { posterCreationId: poster },
           extra.signal,
         );
         return ok(
-          args.posterCreationId === null ? 'Folder cover cleared.' : 'Folder cover pinned.',
+          poster === null ? 'Folder cover cleared.' : 'Folder cover pinned.',
           { folderId: args.folderId, posterCreationId: folder.posterCreationId ?? null },
         );
       }
       if (args.action === 'move-to-group') {
         if (args.groupId === undefined) {
-          throw new Error('move-to-group needs "groupId" — a group id from list-groups, or null to detach.');
+          throw new Error('move-to-group needs "groupId" — a group id from list-groups, or "none" to detach.');
         }
-        const folder = await ctx.client.folders.update(args.folderId, { groupId: args.groupId }, extra.signal);
+        const target = args.groupId === 'none' ? null : args.groupId;
+        const folder = await ctx.client.folders.update(args.folderId, { groupId: target }, extra.signal);
         return ok(
-          args.groupId === null ? 'Folder detached from its group.' : `Folder moved into group ${args.groupId}.`,
+          target === null ? 'Folder detached from its group.' : `Folder moved into group ${target}.`,
           { folderId: args.folderId, groupId: folder.groupId ?? null },
         );
       }
