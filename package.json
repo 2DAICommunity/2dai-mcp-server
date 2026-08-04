@@ -7,6 +7,14 @@
     "2dai-mcp-server": "dist/index.js"
   },
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2DAICommunity/2dai-mcp-server.git"
+  },
+  "homepage": "https://2dai.io",
+  "bugs": {
+    "url": "https://github.com/2DAICommunity/2dai-mcp-server/issues"
+  },
   "files": [
     "dist",
     "README.md",
