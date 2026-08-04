@@ -1,5 +1,7 @@
 # 2dai-mcp-server
 
+[![npm](https://img.shields.io/npm/v/2dai-mcp-server)](https://www.npmjs.com/package/2dai-mcp-server)
+
 MCP server for [2DAI](https://2dai.io) — lets Claude, Cursor, Cline, Windsurf and any other
 MCP host generate images and video, upload references, browse the public feed, and organise
 your cloud drive **on your own 2DAI account**.
