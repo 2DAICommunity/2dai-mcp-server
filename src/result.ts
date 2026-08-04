@@ -64,14 +64,24 @@ export async function previewBlock(
   }
 }
 
+/** Human-shareable link: opens the creation in the owner's 2DAI cloud drive
+ *  (login prompt if needed). This is the ONLY link that works in a browser —
+ *  the CDN download path requires the API key header and 401s otherwise. */
+export function viewUrlFor(creationId: string | undefined): string | undefined {
+  return creationId ? `https://www.2dai.io/dashboard?s=cloud&openCreation=${creationId}` : undefined;
+}
+
 /** One shape for "a generation reached a terminal or pending state", shared by
  *  every generation tool and by check_generation, so an agent sees the same
- *  fields no matter which one it called. */
+ *  fields no matter which one it called. `viewUrl` is the link to hand to the
+ *  human; `downloadUrl` is key-authenticated (for the download_creation tool),
+ *  never a browser link. */
 export function generationSummary(state: QueueState): Record<string, unknown> {
   return {
     queueId: state.queueId,
     status: state.status,
     creationId: state.creationId,
+    viewUrl: viewUrlFor(state.creationId),
     cdnId: state.cdnId,
     downloadUrl: state.downloadUrl,
     costUsd: state.costUsd,

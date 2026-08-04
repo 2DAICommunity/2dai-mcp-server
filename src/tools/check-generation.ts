@@ -23,7 +23,7 @@ export const registerCheckGeneration: RegisterTool = (server, ctx) => {
 
       if (state.status === 'completed') {
         const result = ok(
-          `Done. creationId ${state.creationId}. Use download_creation to save it.`,
+          `Done. creationId ${state.creationId}. Share the viewUrl with the user to see it on 2DAI (login); use download_creation to save it locally — the downloadUrl needs the API key and 401s in a browser.`,
           generationSummary(state),
         );
         const preview = await previewBlock(rc, state.cdnId);

@@ -65,7 +65,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
 
       const { state } = outcome;
       const result = ok(
-        `Video ready. creationId ${state.creationId}. Use download_creation to save the mp4.`,
+        `Video ready. creationId ${state.creationId}. Share the viewUrl with the user to watch it on 2DAI (login); download_creation saves the mp4 locally.`,
         generationSummary(state),
       );
       // The output cdnId is the mp4 — previewBlock would skip it. The frame

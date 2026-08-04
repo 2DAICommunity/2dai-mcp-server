@@ -51,7 +51,7 @@ export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
 
       const { state } = outcome;
       const result = ok(
-        `Variation ready. creationId ${state.creationId} (parent kept in retriedFromCreationId).`,
+        `Variation ready. creationId ${state.creationId} (parent kept in retriedFromCreationId). Share the viewUrl with the user to see it on 2DAI.`,
         generationSummary(state),
       );
       const preview = await previewBlock(rc, state.cdnId);

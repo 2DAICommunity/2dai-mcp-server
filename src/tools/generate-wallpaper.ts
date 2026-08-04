@@ -65,7 +65,7 @@ export const registerGenerateWallpaper: RegisterTool = (server, ctx) => {
 
       const { state } = outcome;
       const result = ok(
-        `Wallpaper ready. creationId ${state.creationId}. Use download_creation to save it.`,
+        `Wallpaper ready. creationId ${state.creationId}. Share the viewUrl with the user to see it on 2DAI (login); download_creation saves it locally.`,
         generationSummary(state),
       );
       const preview = await previewBlock(rc, state.cdnId);

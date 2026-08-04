@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok } from '../result.js';
+import { guard, ok, viewUrlFor } from '../result.js';
 import { resolveReadPath } from '../paths.js';
 
 export const registerUploadImage: RegisterTool = (server, ctx) => {
@@ -49,6 +49,7 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         `pass it as a reference to generate_with_refs or as the inputCreationId of generate_video.`,
         {
           creationId: creation.creationId,
+          viewUrl: viewUrlFor(creation.creationId),
           cdnId: creation.cdnId,
           width: creation.width,
           height: creation.height,

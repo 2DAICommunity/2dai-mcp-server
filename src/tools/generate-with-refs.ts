@@ -79,7 +79,8 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
       const { state } = outcome;
       const result = ok(
         `Image ready. creationId ${state.creationId}. ` +
-        `Use download_creation to save it, or pass the creationId as a reference to another generation.`,
+        `Share the viewUrl with the user to see it on 2DAI (login); use download_creation to save it ` +
+        `locally, or pass the creationId as a reference to another generation.`,
         generationSummary(state),
       );
       const preview = await previewBlock(rc, state.cdnId);
