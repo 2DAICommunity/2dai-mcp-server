@@ -20,7 +20,8 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         'description + tags, trailing * makes a prefix), sort, hideFiled, and usedRef=<creationId> ' +
         'for creations BUILT FROM that creation. Paginate by passing back nextBeforeDate (newest-first ' +
         'only) or with page. Rows carry nsfwFlagged/nsfwRate so you can apply your own content ' +
-        'safeguards on top of the platform\'s. Costs nothing.',
+        'safeguards on top of the platform\'s. Each row has a viewUrl — the browser link to give the ' +
+        'user (opens in their signed-in 2DAI drive). Costs nothing.',
       inputSchema: {
         limit: z.number().int().min(1).max(100).optional().describe('Rows per page (default 20, max 100).'),
         beforeDate: z.string().optional().describe('Pagination cursor — the nextBeforeDate from the previous page.'),

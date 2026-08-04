@@ -36,7 +36,12 @@ export function createServer(config: Config): McpServer {
         'upload references, and organise their cloud drive. Generation spends real credit — call ' +
         'get_account first when you are unsure there is headroom, and never generate speculatively. ' +
         'Long generations return a queueId; collect them with check_generation rather than re-submitting, ' +
-        'which would be charged again. The stats, feed and wallet tools are read-only and never spend.',
+        'which would be charged again. The stats, feed and wallet tools are read-only and never spend. ' +
+        'LINKS: when the user wants to SEE a creation, give them its `viewUrl` — it opens the creation ' +
+        'in their 2DAI cloud drive (they must be signed in to the owning account; the link survives the ' +
+        'login step). NEVER give users a `downloadUrl` or any /cdn/file/ URL: the CDN is private and ' +
+        'those need the API key header, so they fail in a browser. To hand over the actual file, use ' +
+        'download_creation with savePath instead.',
     },
   );
 
