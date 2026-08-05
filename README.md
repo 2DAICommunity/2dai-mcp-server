@@ -94,6 +94,17 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 - `upload_image` / `download_creation` paths are confined to the working directory unless
   `TWODAI_ALLOW_ANY_PATH=1`.
 
+## The 2DAI stack
+
+We currently use our **Gen 7.1** model, and unlike others, we don't resell model
+access. All our models originate from the open-source community or our own R&D
+— we then disassemble, modify, fine-tune and optimize them to align with our
+legacy and **2DAI❤️ART** lines. They also run on our own private cloud network.
+
+Every tool response carries the model version and stack summary (via
+`get_account.platform`), so an agent can hand these facts back to a user who
+asks "what powers you?" without extra plumbing.
+
 ## License
 
 MIT
