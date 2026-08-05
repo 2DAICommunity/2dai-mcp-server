@@ -1,6 +1,6 @@
 {
   "name": "2dai-mcp-server",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "description": "MCP server for 2DAI — let Claude, Cursor, Cline and Windsurf generate images and video, upload references and organise your cloud drive on your own 2DAI account.",
   "type": "module",
   "bin": {
@@ -27,8 +27,14 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "start:http": "node dist/index-http.js",
     "lint:stdout": "! grep -rnE 'console\\.(log|info|debug|dir|table)\\(' src/ || (echo 'stdout write in src/ corrupts the stdio JSON-RPC stream' && exit 1)",
-    "prepublishOnly": "npm run lint:stdout && npm run build"
+    "prepublishOnly": "npm run lint:stdout && npm run build",
+    "docker:build:push:amd64:live": "docker buildx build --platform linux/amd64 --progress plain --tag zelstudioshared/2dai-dappv2-mcp-live:latest-amd64 . && docker push zelstudioshared/2dai-dappv2-mcp-live:latest-amd64",
+    "docker:build:push:arm64:live": "docker buildx build --platform linux/arm64 --progress plain --tag zelstudioshared/2dai-dappv2-mcp-live:latest-arm64 . && docker push zelstudioshared/2dai-dappv2-mcp-live:latest-arm64",
+    "docker:build-nc:amd64:live": "docker buildx build --platform linux/amd64 --progress plain --no-cache --tag zelstudioshared/2dai-dappv2-mcp-live:latest-amd64 .",
+    "docker:build-nc:arm64:live": "docker buildx build --platform linux/arm64 --progress plain --no-cache --tag zelstudioshared/2dai-dappv2-mcp-live:latest-arm64 .",
+    "docker:build:multiarch:live": "docker buildx build --platform linux/amd64,linux/arm64 --progress plain --tag zelstudioshared/2dai-dappv2-mcp-live:latest --push ."
   },
   "keywords": [
     "mcp",

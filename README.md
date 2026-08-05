@@ -34,6 +34,44 @@ claude mcp add 2dai --env TWODAI_API_KEY=2dai_sk_... -- npx -y 2dai-mcp-server
 
 The key is read from the environment only — never pass it as a tool argument.
 
+## Hosted alternative — `mcp.2dai.io:800`
+
+Every host that speaks **remote MCP (Streamable HTTP)** can point at our hosted
+server instead of running `npx` locally. No install, no Node runtime, no
+process lifecycle — just a URL and a Bearer key.
+
+**Endpoint** — `https://mcp.2dai.io:800/mcp`
+
+**Auth** — `Authorization: Bearer 2dai_sk_...` on every request (same key you'd
+put in `TWODAI_API_KEY` for the stdio flow).
+
+**Claude Desktop / Cursor / Cline / Windsurf** (remote-MCP JSON shape — check
+your host's docs, some hosts still spell the type `"remote"`):
+
+```json
+{
+  "mcpServers": {
+    "2dai": {
+      "type": "streamable-http",
+      "url": "https://mcp.2dai.io:800/mcp",
+      "headers": { "Authorization": "Bearer 2dai_sk_..." }
+    }
+  }
+}
+```
+
+**Claude Code**
+
+```bash
+claude mcp add --transport http 2dai https://mcp.2dai.io:800/mcp \
+  --header "Authorization: Bearer 2dai_sk_..."
+```
+
+Both transports (stdio via `npx` and hosted via HTTP) expose the exact same
+tools and the exact same behavior. Pick whichever fits: `npx` when you want
+zero third-party dependency and full control of the process, hosted when you
+want zero install and a single URL.
+
 ## Tools
 
 | Tool | What it does | Scope | Spends credit |

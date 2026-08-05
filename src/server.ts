@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { Client } from '2dai-cloud-sdk';
 import type { Config } from './config.js';
-import { createClient, VERSION, type ToolContext } from './context.js';
+import { VERSION, type ToolContext } from './context.js';
 import { registerGetAccount } from './tools/get-account.js';
 import { registerGenerateImage } from './tools/generate-image.js';
 import { registerGenerateWithRefs } from './tools/generate-with-refs.js';
@@ -24,10 +25,13 @@ import { registerGetWalletHistory } from './tools/get-wallet-history.js';
 import { registerGetTokenPrice } from './tools/get-token-price.js';
 
 /** Builds a fully configured MCP server, knowing nothing about how it will be
- *  transported. `index.ts` is the only file aware of stdio; a future
- *  `serve-http.ts` for mcp.2dai.io reuses this untouched, which is the whole
- *  point of the split. */
-export function createServer(config: Config): McpServer {
+ *  transported. `index.ts` is the only file aware of stdio; `serve-http.ts`
+ *  reuses this untouched — one call per stdio process, one call per HTTP
+ *  request in the hosted transport. Each caller supplies its own SDK client,
+ *  which is what lets the hosted process serve many users concurrently:
+ *  every request builds its own client from the header key and its own
+ *  server, and both are torn down when the response closes. */
+export function createServer(config: Config, client: Client): McpServer {
   const server = new McpServer(
     { name: '2dai-mcp-server', version: VERSION },
     {
@@ -48,7 +52,7 @@ export function createServer(config: Config): McpServer {
     },
   );
 
-  const ctx: ToolContext = { client: createClient(config), config };
+  const ctx: ToolContext = { client, config };
 
   registerGetAccount(server, ctx);
   registerGenerateImage(server, ctx);

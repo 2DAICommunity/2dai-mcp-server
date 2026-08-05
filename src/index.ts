@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { loadConfig, ConfigError } from './config.js';
+import { createClient } from './context.js';
 import { createServer } from './server.js';
 
 /** The ONLY stdio-aware file. Everything it touches — config, server, tools —
@@ -23,7 +24,7 @@ async function main(): Promise<void> {
     throw err;
   }
 
-  const server = createServer(config);
+  const server = createServer(config, createClient(config));
   await server.connect(new StdioServerTransport());
   process.stderr.write('[2dai-mcp-server] ready on stdio\n');
 }

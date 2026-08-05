@@ -57,3 +57,24 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     allowAnyPath: boolFromEnv('TWODAI_ALLOW_ANY_PATH', false),
   };
 }
+
+/** Hosted (mcp.2dai.io) runtime config. The apiKey is NOT read from env here —
+ *  each incoming request supplies its own via `Authorization: Bearer`, and the
+ *  serve-http handler folds it back into a per-request `Config` object. */
+export interface HostedConfig extends Omit<Config, 'apiKey'> {
+  port: number;
+  bindHost: string;
+}
+
+export function loadHostedConfig(env: NodeJS.ProcessEnv = process.env): HostedConfig {
+  return {
+    baseUrl: (env.TWODAI_API_BASE ?? '').trim() || undefined,
+    previews: boolFromEnv('TWODAI_PREVIEWS', true),
+    previewMaxSide: intFromEnv('TWODAI_PREVIEW_MAX_SIDE', 512, 64, 2048),
+    waitBudgetMs: intFromEnv('TWODAI_WAIT_BUDGET_MS', 45_000, 0, 600_000),
+    idempotencyWindowMs: intFromEnv('TWODAI_IDEMPOTENCY_WINDOW_MS', 30_000, 0, 300_000),
+    allowAnyPath: boolFromEnv('TWODAI_ALLOW_ANY_PATH', false),
+    port: intFromEnv('TWODAI_HTTP_PORT', 3100, 1, 65_535),
+    bindHost: (env.TWODAI_HTTP_HOST ?? '0.0.0.0').trim() || '0.0.0.0',
+  };
+}
