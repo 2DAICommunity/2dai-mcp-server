@@ -1,7 +1,13 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { QueueState, QueueTicket } from '2dai-cloud-sdk';
+import type { Creation, QueueState, QueueTicket } from '2dai-cloud-sdk';
 import type { RequestContext } from './context.js';
 import { describeError } from './errors.js';
+
+/** NSFW tier threshold at which the vision-derived description is dropped
+ *  from generation responses. The label + numeric rate still ship — only the
+ *  caption text is withheld, so the agent knows why and can opt into
+ *  fetching it via `get_creation` when it genuinely needs the caption. */
+export const DESCRIPTION_NSFW_MASK_RATE = 0.8;
 
 /** Tool results carry BOTH a human/agent-readable line and a structured JSON
  *  block. Models act on the prose; scripted callers parse the JSON. Sending
@@ -71,22 +77,89 @@ export function viewUrlFor(creationId: string | undefined): string | undefined {
   return creationId ? `https://www.2dai.io/dashboard?s=cloud&openCreation=${creationId}` : undefined;
 }
 
+/** Mirror of the studio's `nsfwScoreLabel` — same 5 tiers, same 2-decimal
+ *  floor with a +1e-10 epsilon so a 0.9976 doesn't visually promote to
+ *  Prohibited. Returns `null` when there is no numeric rate (unrated),
+ *  which lets callers omit the field cleanly rather than shipping "SFW"
+ *  as a default for content that never got a moderation pass. */
+export function nsfwLabel(rate: number | undefined | null): string | null {
+  if (typeof rate !== 'number' || !isFinite(rate)) return null;
+  const clamped = Math.max(0, Math.min(1, rate));
+  return clamped >= 1     ? 'Prohibited'
+       : clamped >= 0.99  ? 'Adult NSFW'
+       : clamped >= 0.8   ? 'Near-nude'
+       : clamped >= 0.6   ? 'Suggestive'
+                          : 'SFW';
+}
+
 /** One shape for "a generation reached a terminal or pending state", shared by
  *  every generation tool and by check_generation, so an agent sees the same
- *  fields no matter which one it called. `viewUrl` is the link to hand to the
- *  human; `downloadUrl` is key-authenticated (for the download_creation tool),
- *  never a browser link. */
-export function generationSummary(state: QueueState): Record<string, unknown> {
+ *  fields no matter which one it called.
+ *
+ *  `viewUrl` is the ONLY shareable link (owner opens it on 2DAI, login
+ *  survives the redirect). The old `downloadUrl` and `cdnId` used to ship
+ *  here — they're gone: `downloadUrl` 401s in a browser (bearer-required)
+ *  and `cdnId` was only ever useful as an alt input to `download_creation`,
+ *  which already takes `creationId`. Fewer fields, one clear path.
+ *
+ *  When `creation` is passed (hydrated via `client.creations.get()` after
+ *  completion), the summary carries what the agent needs to make sense of
+ *  the output: NSFW rate + label, dimensions, and the vision caption (unless
+ *  the NSFW tier gates it — see DESCRIPTION_NSFW_MASK_RATE). */
+export function generationSummary(state: QueueState, creation?: Creation): Record<string, unknown> {
+  const rate = creation?.nsfwRate;
+  const label = nsfwLabel(rate);
+  const descriptionHidden = typeof rate === 'number' && rate >= DESCRIPTION_NSFW_MASK_RATE;
   return {
     queueId: state.queueId,
     status: state.status,
     creationId: state.creationId,
     viewUrl: viewUrlFor(state.creationId),
-    cdnId: state.cdnId,
-    downloadUrl: state.downloadUrl,
     costUsd: state.costUsd,
     completedAt: state.completedAt,
+    ...(creation?.width !== undefined ? { width: creation.width } : {}),
+    ...(creation?.height !== undefined ? { height: creation.height } : {}),
+    ...(typeof rate === 'number' ? { nsfwRate: rate } : {}),
+    ...(label ? { nsfwLabel: label } : {}),
+    ...(creation?.nsfwFlagged ? { nsfwFlagged: true } : {}),
+    ...(creation?.description && !descriptionHidden ? { description: creation.description } : {}),
+    ...(descriptionHidden ? { descriptionHidden: true } : {}),
   };
+}
+
+/** Prose fragment appended to the generation-ready line when the content
+ *  scored above SFW. SFW is the norm and would just be noise; anything from
+ *  Suggestive up warrants a heads-up so the agent can decide whether to hand
+ *  the creation to the user as-is. */
+export function nsfwProseFragment(creation: Creation | undefined): string {
+  const rate = creation?.nsfwRate;
+  const label = nsfwLabel(rate);
+  if (!label || label === 'SFW' || typeof rate !== 'number') return '';
+  const floored = Math.floor(rate * 100 + 1e-10) / 100;
+  const gated = rate >= DESCRIPTION_NSFW_MASK_RATE
+    ? ' Description withheld at this tier — call get_creation if you need the caption.'
+    : '';
+  return ` NSFW: ${label} (${floored.toFixed(2)}).${gated}`;
+}
+
+/** Run the creation-metadata hydrate and the CDN preview fetch in ONE round-trip:
+ *  both hit the API/CDN backend and neither depends on the other, so serialising
+ *  would double the tail latency for no gain. Both fail-soft: metadata errors
+ *  return undefined (summary degrades to bare QueueState fields), preview errors
+ *  return undefined (image block absent). Neither can turn a successful,
+ *  already-charged generation into a tool error. */
+export async function hydrateForResponse(
+  ctx: RequestContext,
+  state: QueueState,
+  previewCdnId?: string,
+): Promise<{ creation: Creation | undefined; preview: CallToolResult['content'][number] | undefined }> {
+  const [creation, preview] = await Promise.all([
+    state.creationId
+      ? ctx.client.creations.get(state.creationId, ctx.signal).catch(() => undefined)
+      : Promise.resolve(undefined),
+    previewBlock(ctx, previewCdnId ?? state.cdnId),
+  ]);
+  return { creation, preview };
 }
 
 export function pendingResult(ticket: QueueTicket, lastStatus?: string): CallToolResult {

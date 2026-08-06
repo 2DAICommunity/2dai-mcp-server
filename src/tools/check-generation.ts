@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, previewBlock } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment } from '../result.js';
 
 /** The other half of the adaptive wait: whenever a generation outlives the
  *  wait budget, this is how the agent collects it. */
@@ -22,11 +22,14 @@ export const registerCheckGeneration: RegisterTool = (server, ctx) => {
       const state = await ctx.client.queue.get(args.queueId, extra.signal);
 
       if (state.status === 'completed') {
+        const { creation, preview } = await hydrateForResponse(rc, state);
         const result = ok(
-          `Done. creationId ${state.creationId}. Share the viewUrl with the user to see it on 2DAI (login); use download_creation to save it locally — the downloadUrl needs the API key and 401s in a browser.`,
-          generationSummary(state),
+          `Done. creationId ${state.creationId}.` +
+          nsfwProseFragment(creation) +
+          ` Share the viewUrl with the user; preview attached inline (when the output is an image), and ` +
+          `download_creation saves the full asset locally.`,
+          generationSummary(state, creation),
         );
-        const preview = await previewBlock(rc, state.cdnId);
         if (preview) result.content.push(preview);
         return result;
       }

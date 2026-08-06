@@ -86,6 +86,7 @@ want zero install and a single URL.
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
 | `upload_image` | Upload a local image / base64 as a reference | generate | no |
 | `download_creation` | Save the full-resolution asset to disk, or return an inline preview | read | no |
+| `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
 | `list_creations` | Page, search, sort and filter the library (folders, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
 | `browse_feed` | Page through the public feed (other creators' published work) | read | no |
 | `list_folders` | Page through the account's folders | read | no |
@@ -131,6 +132,12 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   double-charged.
 - `upload_image` / `download_creation` paths are confined to the working directory unless
   `TWODAI_ALLOW_ANY_PATH=1`.
+- **Generation replies** carry `viewUrl` (share with the user, opens in their 2DAI cloud
+  drive), an inline preview image so you can see the output, `nsfwLabel` + `nsfwRate`
+  for moderation, and dimensions. The `description` (vision-derived caption) is included
+  when `nsfwRate < 0.8`; at Near-nude+ it is withheld — call `get_creation` if the user
+  needs the caption. There is no `downloadUrl` in the reply: the CDN is bearer-gated,
+  so use `download_creation` for actual bytes.
 
 ## The 2DAI stack
 

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, pendingResult, previewBlock } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
@@ -63,13 +63,15 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
       }
 
       const { state } = outcome;
+      const { creation, preview } = await hydrateForResponse(rc, state);
       const result = ok(
-        `Image ready. creationId ${state.creationId}. ` +
-        `Share the viewUrl with the user to see it on 2DAI (login); use download_creation to save it ` +
-        `locally, or pass the creationId as a reference to another generation.`,
-        generationSummary(state),
+        `Image ready. creationId ${state.creationId}.` +
+        nsfwProseFragment(creation) +
+        ` Share the viewUrl with the user to see it on 2DAI (login); the inline preview is already ` +
+        `attached, use download_creation to save the full-resolution file locally, or pass the creationId ` +
+        `as a reference to another generation.`,
+        generationSummary(state, creation),
       );
-      const preview = await previewBlock(rc, state.cdnId);
       if (preview) result.content.push(preview);
       return result;
     }),

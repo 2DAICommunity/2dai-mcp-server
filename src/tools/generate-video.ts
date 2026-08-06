@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, pendingResult, previewBlock } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, previewBlock } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
@@ -64,20 +64,24 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
       }
 
       const { state } = outcome;
+      // Video is a special case: state.cdnId is the mp4 (previewBlock skips it),
+      // so we hydrate the creation for BOTH the summary enrichment (NSFW,
+      // description) AND to reach the first-frame preview cdnId that IS an image
+      // the model can see. Metadata hydration is shared; preview fetch is
+      // targeted at the frame, not the mp4.
+      const creation = state.creationId
+        ? await ctx.client.creations.get(state.creationId, extra.signal).catch(() => undefined)
+        : undefined;
+      const frame = (creation?.raw as any)?.framePreviewCdnIds?.[0] as string | undefined;
       const result = ok(
-        `Video ready. creationId ${state.creationId}. Share the viewUrl with the user to watch it on 2DAI (login); download_creation saves the mp4 locally.`,
-        generationSummary(state),
+        `Video ready. creationId ${state.creationId}.` +
+        nsfwProseFragment(creation) +
+        ` Share the viewUrl with the user; first-frame preview attached inline, download_creation saves ` +
+        `the mp4 locally.`,
+        generationSummary(state, creation),
       );
-      // The output cdnId is the mp4 — previewBlock would skip it. The frame
-      // preview is an image the model CAN see, so fetch it off the creation.
-      try {
-        const c = state.creationId ? await ctx.client.creations.get(state.creationId, extra.signal) : undefined;
-        const frame = (c?.raw as any)?.framePreviewCdnIds?.[0] as string | undefined;
-        const preview = await previewBlock(rc, frame);
-        if (preview) result.content.push(preview);
-      } catch {
-        /* preview is a bonus, never a failure */
-      }
+      const preview = await previewBlock(rc, frame);
+      if (preview) result.content.push(preview);
       return result;
     }),
   );

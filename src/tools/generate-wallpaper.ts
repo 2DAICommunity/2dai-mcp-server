@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, pendingResult, previewBlock } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
@@ -64,11 +64,14 @@ export const registerGenerateWallpaper: RegisterTool = (server, ctx) => {
       }
 
       const { state } = outcome;
+      const { creation, preview } = await hydrateForResponse(rc, state);
       const result = ok(
-        `Wallpaper ready. creationId ${state.creationId}. Share the viewUrl with the user to see it on 2DAI (login); download_creation saves it locally.`,
-        generationSummary(state),
+        `Wallpaper ready. creationId ${state.creationId}.` +
+        nsfwProseFragment(creation) +
+        ` Share the viewUrl with the user; preview attached inline, download_creation saves the full ` +
+        `file locally.`,
+        generationSummary(state, creation),
       );
-      const preview = await previewBlock(rc, state.cdnId);
       if (preview) result.content.push(preview);
       return result;
     }),

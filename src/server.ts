@@ -12,6 +12,7 @@ import { registerCheckGeneration } from './tools/check-generation.js';
 import { registerCancelGeneration } from './tools/cancel-generation.js';
 import { registerUploadImage } from './tools/upload-image.js';
 import { registerDownloadCreation } from './tools/download-creation.js';
+import { registerGetCreation } from './tools/get-creation.js';
 import { registerListCreations } from './tools/list-creations.js';
 import { registerBrowseFeed } from './tools/browse-feed.js';
 import { registerListFolders } from './tools/list-folders.js';
@@ -41,11 +42,14 @@ export function createServer(config: Config, client: Client): McpServer {
         'get_account first when you are unsure there is headroom, and never generate speculatively. ' +
         'Long generations return a queueId; collect them with check_generation rather than re-submitting, ' +
         'which would be charged again. The stats, feed and wallet tools are read-only and never spend. ' +
-        'LINKS: when the user wants to SEE a creation, give them its `viewUrl` — it opens the creation ' +
-        'in their 2DAI cloud drive (they must be signed in to the owning account; the link survives the ' +
-        'login step). NEVER give users a `downloadUrl` or any /cdn/file/ URL: the CDN is private and ' +
-        'those need the API key header, so they fail in a browser. To hand over the actual file, use ' +
-        'download_creation with savePath instead. ' +
+        'LINKS: the only shareable link is `viewUrl` — it opens the creation in the owner\'s 2DAI cloud ' +
+        'drive (login prompt if needed). To hand the user the actual file bytes, call download_creation ' +
+        'with a savePath. Every generation reply also carries an inline preview image so you can see ' +
+        'what came out without an extra call. ' +
+        'CONTENT: generation replies include `nsfwLabel` (SFW / Suggestive / Near-nude / Adult NSFW / ' +
+        'Prohibited) and `nsfwRate` (0..1). The vision-derived `description` is withheld from the ' +
+        'generation reply at Near-nude+ (rate ≥ 0.8) — call get_creation for the caption if the user ' +
+        'needs it. ' +
         'STACK: 2DAI runs its own proprietary stack — the Gen 7.1 image/video model, disassembled, ' +
         'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud. ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',
@@ -64,6 +68,7 @@ export function createServer(config: Config, client: Client): McpServer {
   registerCancelGeneration(server, ctx);
   registerUploadImage(server, ctx);
   registerDownloadCreation(server, ctx);
+  registerGetCreation(server, ctx);
   registerListCreations(server, ctx);
   registerBrowseFeed(server, ctx);
   registerListFolders(server, ctx);
