@@ -21,6 +21,8 @@ export const registerDownloadCreation: RegisterTool = (server, ctx) => {
           .describe('Direct CDN asset id — alternative when no creationId is at hand.'),
         savePath: z.string().optional()
           .describe('Where to write the file, relative to the working directory. Extension is added for you.'),
+        watermark: z.boolean().optional()
+          .describe('Overlay the 2DAI watermark on the downloaded bytes (default true). The account may need Holder tier or above to turn it off — server ignores the flag for below-gate accounts and stamps anyway. Applies to images and video frames alike.'),
       },
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
@@ -36,11 +38,19 @@ export const registerDownloadCreation: RegisterTool = (server, ctx) => {
         cdnId = creation.cdnId;
         if (!cdnId) throw new Error(`Creation ${args.creationId} has no media to download.`);
       }
+      // Default watermark: true — matches the web default. Agents ask for
+      // `watermark: false` when the user wants clean bytes; the API still
+      // stamps if the account's tier doesn't have `canDisableWatermark`.
+      const withWatermark = args.watermark !== false;
 
       if (args.savePath) {
         const target = await resolveWritePath(args.savePath, ctx.config);
-        const finalPath = await ctx.client.cdn.download(cdnId!, { savePath: target, signal: extra.signal });
-        return ok(`Saved to ${finalPath}.`, { path: finalPath, cdnId });
+        const finalPath = await ctx.client.cdn.download(cdnId!, {
+          savePath: target,
+          signal: extra.signal,
+          ...(withWatermark ? { watermark: true } : {}),
+        });
+        return ok(`Saved to ${finalPath}.`, { path: finalPath, cdnId, watermark: withWatermark });
       }
 
       const rc = { ...ctx, signal: extra.signal };
