@@ -11,7 +11,8 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
       description:
         'Upload a local image (or base64 bytes) to the 2DAI cloud drive so it can be used as a ' +
         'reference for generation ("use THIS image"). Free, but the file goes through the platform\'s ' +
-        'moderation pass — NSFW beyond the account\'s ceiling is rejected. Max 10 MB; jpeg/png/webp. ' +
+        'moderation pass — NSFW beyond the account\'s ceiling is rejected. Max 100 MB (Founder tier) — ' +
+        'lower tiers cap earlier, the server returns 413 with the account\'s actual max on excess. jpeg/png/webp. ' +
         'Paths must stay inside the working directory unless the server was started with ' +
         'TWODAI_ALLOW_ANY_PATH=1.',
       inputSchema: {

@@ -66,6 +66,22 @@ export function describeError(err: unknown): string {
     if (err.code === 'CREATION_IN_TRASH') {
       return 'This creation is in the trash — restore it before publishing.';
     }
+    if (err.code === 'FILE_TOO_LARGE') {
+      // Preserve the crisp "your file was X, cap is Y" message the local
+      // pre-check used to emit before the cap was bumped to 100 MB (the
+      // Founder ceiling) — otherwise a lower-tier account gets a generic
+      // "Invalid request" and the agent can only guess how much to shrink.
+      const d = (err as any).details ?? {};
+      const maxMb = typeof d.maxBytes === 'number' ? (d.maxBytes / 1024 / 1024).toFixed(0) : null;
+      const actualMb = typeof d.actualBytes === 'number' ? (d.actualBytes / 1024 / 1024).toFixed(1) : null;
+      if (maxMb && actualMb) {
+        return `Upload rejected — file is ${actualMb} MB but this account caps uploads at ${maxMb} MB.`;
+      }
+      if (maxMb) {
+        return `Upload rejected — this account caps uploads at ${maxMb} MB.`;
+      }
+      return 'Upload rejected — file exceeds this account\'s size cap.';
+    }
     return `Invalid request${err.message ? `: ${err.message}` : ''}.`;
   }
   if (err instanceof ApiError) {

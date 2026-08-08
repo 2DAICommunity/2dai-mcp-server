@@ -12,7 +12,12 @@ import type { Config } from './config.js';
 
 export class PathBoundaryError extends Error {}
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // matches the server-side cap
+/** Client-side pre-check ceiling. Matches the HIGHEST tier's server cap
+ *  (Founder = 100 MB) so a Founder account isn't refused locally by this
+ *  guard before its file even reaches the server. Accounts on lower tiers
+ *  still get a proper 413 FILE_TOO_LARGE from the server (`/creation/upload`
+ *  in the API), which the MCP surfaces back to the agent. */
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 async function assertInsideCwd(realPath: string, kind: 'read' | 'write'): Promise<void> {
   const cwd = await realpath(process.cwd());
@@ -39,7 +44,7 @@ export async function resolveReadPath(userPath: string, config: Config): Promise
   if (!info.isFile()) throw new PathBoundaryError(`Not a file: ${abs}`);
   if (info.size > MAX_UPLOAD_BYTES) {
     throw new PathBoundaryError(
-      `File is ${(info.size / 1024 / 1024).toFixed(1)} MB — the upload cap is 10 MB.`,
+      `File is ${(info.size / 1024 / 1024).toFixed(1)} MB — the upload cap is 100 MB (Founder tier); lower tiers cap earlier.`,
     );
   }
   if (!config.allowAnyPath) await assertInsideCwd(real, 'read');
