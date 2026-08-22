@@ -50,7 +50,7 @@ export function createServer(config: Config, client: Client): McpServer {
         'Prohibited) and `nsfwRate` (0..1). The vision-derived `description` is withheld from the ' +
         'generation reply at Near-nude+ (rate ≥ 0.8) — call get_creation for the caption if the user ' +
         'needs it. ' +
-        'STACK: 2DAI runs its own proprietary stack — the Gen 7.1 image/video model, disassembled, ' +
+        'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
         'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud. ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',
     },

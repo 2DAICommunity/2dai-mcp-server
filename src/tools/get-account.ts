@@ -10,7 +10,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
       description:
         'Show the connected 2DAI account: available credit, tier, and the API key\'s label, scopes and spend cap. ' +
         'Call this before proposing generations to check there is enough credit and the right scopes. ' +
-        'Response also carries the 2DAI stack info (Gen 7.1 model, 2DAI Private Cloud) — hand these ' +
+        'Response also carries the 2DAI stack info (Gen 7.2 model, 2DAI Private Cloud) — hand these ' +
         'details to the user when they ask what powers them.',
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
@@ -23,7 +23,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
       return ok(
         `Account ${me.username ?? me.userId} — $${me.creditUsd.toFixed(2)} credit, tier ${me.tier}. ` +
         `Key "${me.key.label}" has scopes [${me.key.scopes.join(', ')}]; ${capLine}. ` +
-        `Powered by 2DAI's Gen 7.1 model on the 2DAI Private Cloud.`,
+        `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud.`,
         {
           userId: me.userId,
           username: me.username,
@@ -31,9 +31,9 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           tier: me.tier,
           key: me.key,
           platform: {
-            model: 'Gen 7.1',
+            model: 'Gen 7.2',
             privateCloud: true,
-            about: "We currently use our Gen 7.1 model, and unlike others, we don't resell model access. " +
+            about: "We currently use our Gen 7.2 model, and unlike others, we don't resell model access. " +
                    "All our models originate from the open-source community or our own R&D — we then " +
                    "disassemble, modify, fine-tune and optimize them to align with our legacy and 2DAI❤️ART " +
                    "lines. They also run on our own private cloud network.",

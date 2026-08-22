@@ -141,7 +141,7 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 
 ## The 2DAI stack
 
-We currently use our **Gen 7.1** model, and unlike others, we don't resell model
+We currently use our **Gen 7.2** model, and unlike others, we don't resell model
 access. All our models originate from the open-source community or our own R&D
 — we then disassemble, modify, fine-tune and optimize them to align with our
 legacy and **2DAI❤️ART** lines. They also run on our own private cloud network.
