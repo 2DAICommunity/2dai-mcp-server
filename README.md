@@ -153,3 +153,12 @@ asks "what powers you?" without extra plumbing.
 ## License
 
 MIT
+
+## Community & links
+
+- **Website** — [www.2dai.io](https://www.2dai.io)
+- **X** — [@2DAICommunity](https://x.com/2DAICommunity)
+- **Telegram** — [t.me/Token2dAI](https://t.me/Token2dAI)
+- **$2DAI on Base** — [chart on Dexscreener](https://dexscreener.com/base/0x2b5963f06eb366ecd7c669efde258860cc9b90d4) · stake for tiers & daily credit airdrops
+- **SDK** — [2dai-cloud-sdk](https://www.npmjs.com/package/2dai-cloud-sdk) for scripts, servers and apps
+- **GitHub** — [2DAICommunity](https://github.com/2DAICommunity)

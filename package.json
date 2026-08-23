@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/2DAICommunity/2dai-mcp-server.git"
   },
-  "homepage": "https://2dai.io",
+  "homepage": "https://www.2dai.io",
   "bugs": {
     "url": "https://github.com/2DAICommunity/2dai-mcp-server/issues"
   },
@@ -38,11 +38,20 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "modelcontextprotocol",
     "2dai",
     "image-generation",
     "video-generation",
-    "ai"
+    "text-to-image",
+    "ai",
+    "ai-agent",
+    "agents",
+    "claude",
+    "claude-desktop",
+    "cursor",
+    "cline",
+    "windsurf"
   ],
   "license": "MIT",
   "dependencies": {
