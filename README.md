@@ -81,6 +81,7 @@ want zero install and a single URL.
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
 | `generate_video` | Animate a still creation into a short clip | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
+| `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
@@ -90,6 +91,7 @@ want zero install and a single URL.
 | `list_creations` | Page, search, sort and filter the library (folders, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
 | `browse_feed` | Page through the public feed (other creators' published work) | read | no |
 | `list_folders` | Page through the account's folders | read | no |
+| `list_artistic_styles` | The curated artistic styles available to `generate_in_artistic_style` | read | no |
 | `manage_folder` | Folder CRUD + favorites, poster, and sidebar groups (create/rename/delete/move-to-group/list-groups) | manage | no |
 | `organise_creation` | Move / trash / restore / like / unlike one creation; `batch-trash` / `batch-restore` up to 100; permanent delete stays one-at-a-time | manage | no |
 | `publish_creation` | Publish / unpublish a creation on the public feed | publish | no |

@@ -8,6 +8,8 @@ import { registerGenerateWithRefs } from './tools/generate-with-refs.js';
 import { registerGenerateVideo } from './tools/generate-video.js';
 import { registerGenerateSimilar } from './tools/generate-similar.js';
 import { registerGenerateWallpaper } from './tools/generate-wallpaper.js';
+import { registerGenerateArtisticStyle } from './tools/generate-artistic-style.js';
+import { registerListArtisticStyles } from './tools/list-artistic-styles.js';
 import { registerCheckGeneration } from './tools/check-generation.js';
 import { registerCancelGeneration } from './tools/cancel-generation.js';
 import { registerUploadImage } from './tools/upload-image.js';
@@ -64,6 +66,7 @@ export function createServer(config: Config, client: Client): McpServer {
   registerGenerateVideo(server, ctx);
   registerGenerateSimilar(server, ctx);
   registerGenerateWallpaper(server, ctx);
+  registerGenerateArtisticStyle(server, ctx);
   registerCheckGeneration(server, ctx);
   registerCancelGeneration(server, ctx);
   registerUploadImage(server, ctx);
@@ -72,6 +75,7 @@ export function createServer(config: Config, client: Client): McpServer {
   registerListCreations(server, ctx);
   registerBrowseFeed(server, ctx);
   registerListFolders(server, ctx);
+  registerListArtisticStyles(server, ctx);
   registerManageFolder(server, ctx);
   registerOrganiseCreation(server, ctx);
   registerPublishCreation(server, ctx);
