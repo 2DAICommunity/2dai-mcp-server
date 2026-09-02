@@ -14,8 +14,8 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
       description:
         'Artist Painter: render the prompt as a NEW work in a curated artistic style. This SPENDS the ' +
         'account\'s credit (billed like style-transfer). The server samples the style\'s reference works, ' +
-        'the TIXI agent extracts its visual language, and the subject is painted in it, signed "Tixi" unless the ' +
-        'prompt asks otherwise. artisticStyleId comes from list_artistic_styles, or "auto" (default) lets the server pick ' +
+        'the TIXI agent extracts its visual language, and the subject is painted in it — unsigned unless the ' +
+        'prompt asks for a signature. artisticStyleId comes from list_artistic_styles, or "auto" (default) lets the server pick ' +
         'the best-matching style for the prompt. Up to 3 optional subject images can anchor what gets painted. ' +
         'Needs a prompt OR at least one subject ref. Returns the finished creation within the wait budget, ' +
         'else a queueId for check_generation.',
