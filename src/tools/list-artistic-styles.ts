@@ -7,7 +7,7 @@ export const registerListArtisticStyles: RegisterTool = (server, ctx) => {
     {
       title: 'List curated artistic styles',
       description:
-        'The curated artistic styles available to generate_in_artistic_style, each with an artisticStyleId, a title and a ' +
+        'The curated artistic styles available to generate_in_artistic_style, each with an artisticStyleId, a title, a short public blurb and a ' +
         'vignette. Costs nothing. Pass an artisticStyleId to generate_in_artistic_style, or let it pick with "auto".',
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: true },
@@ -17,6 +17,7 @@ export const registerListArtisticStyles: RegisterTool = (server, ctx) => {
       const rows = styles.map((a) => ({
         artisticStyleId: a.artisticStyleId,
         title: a.title,
+        blurb: a.blurb,
         directive: a.directive,
         thumbnailUrl: a.thumbnailCdnId ? ctx.client.cdn.url(a.thumbnailCdnId, { maxSide: 256 }) : undefined,
       }));
