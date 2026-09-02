@@ -15,8 +15,9 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         'Page through the account\'s creations, newest first — or pick ONE at random with random=true. ' +
         'Filter MODES are mutually exclusive: folderId ("root" for ungrouped) / trashed=true; an ' +
         'activity lens; a smart collection ("faces", "videos", "crop", "alpha", or "favorites" = ' +
-        'creations inside starred folders); or sharedFolderId for a folder another user shared with ' +
-        'this account. Cross-cutting filters combine with any mode: search (whole words over ' +
+        'creations inside starred folders); sharedFolderId for a folder another user shared with ' +
+        'this account; or groupId for a folder group (every folder filed in it, one listing). ' +
+        'Cross-cutting filters combine with any mode: search (whole words over ' +
         'description + tags, trailing * makes a prefix), sort, hideFiled, and usedRef=<creationId> ' +
         'for creations BUILT FROM that creation. Paginate by passing back nextBeforeDate (newest-first ' +
         'only) or with page. Rows carry nsfwFlagged/nsfwRate so you can apply your own content ' +
@@ -33,6 +34,8 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         smart: z.string().optional()
           .describe('Smart collection: "faces", "videos", "crop", "alpha", or "favorites" (creations in starred folders).'),
         sharedFolderId: z.string().optional().describe('A folder shared WITH this account — read-only collaborator view.'),
+        groupId: z.string().optional()
+          .describe('A folder group — creations across every folder filed in it (ids from manage_folder list-groups).'),
         search: z.string().min(1).max(128).optional()
           .describe('Free-text search over descriptions and tags. Whole-word AND; a trailing * makes a token a prefix ("cyber*").'),
         sort: z.enum(SORTS).optional().describe('Ordering (default newest). Only "newest" emits a nextBeforeDate cursor.'),
@@ -52,6 +55,7 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         ...(args.activity ? { activity: args.activity } : {}),
         ...(args.smart ? { smart: args.smart } : {}),
         ...(args.sharedFolderId ? { sharedFolderId: args.sharedFolderId } : {}),
+        ...(args.groupId ? { groupId: args.groupId } : {}),
         ...(args.search ? { search: args.search } : {}),
         ...(args.sort ? { sort: args.sort } : {}),
         ...(args.hideFiled !== undefined ? { hideFiled: args.hideFiled } : {}),

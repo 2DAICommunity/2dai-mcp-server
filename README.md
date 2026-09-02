@@ -88,7 +88,7 @@ want zero install and a single URL.
 | `upload_image` | Upload a local image / base64 as a reference | generate | no |
 | `download_creation` | Save the full-resolution asset to disk, or return an inline preview | read | no |
 | `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
-| `list_creations` | Page, search, sort and filter the library (folders, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
+| `list_creations` | Page, search, sort and filter the library (folders, folder groups, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
 | `browse_feed` | Page through the public feed (other creators' published work) | read | no |
 | `list_folders` | Page through the account's folders | read | no |
 | `list_artistic_styles` | The curated artistic styles available to `generate_in_artistic_style` | read | no |
