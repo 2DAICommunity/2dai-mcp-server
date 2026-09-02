@@ -18,7 +18,6 @@ export const registerListArtisticStyles: RegisterTool = (server, ctx) => {
         artisticStyleId: a.artisticStyleId,
         title: a.title,
         blurb: a.blurb,
-        directive: a.directive,
         thumbnailUrl: a.thumbnailCdnId ? ctx.client.cdn.url(a.thumbnailCdnId, { maxSide: 256 }) : undefined,
       }));
       return ok(`${rows.length} artistic style(s) available.`, { artisticStyles: rows });
