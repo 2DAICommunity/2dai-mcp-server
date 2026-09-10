@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
 import { guard, ok, fail } from '../result.js';
-import { slimRow } from './rows.js';
+import { fullRow } from './rows.js';
 
 /** Single-creation lookup. list_creations pages the library, but there was no
  *  cheap way to fetch ONE row by id — an agent had to page through a folder
@@ -15,8 +15,9 @@ export const registerGetCreation: RegisterTool = (server, ctx) => {
     {
       title: 'Get a creation by id',
       description:
-        'Fetch one creation row by its id. Returns the same slim shape as list_creations rows — ' +
-        'creationId, viewUrl, prompt (owner-only), description (vision-derived caption), toolKind, ' +
+        'Fetch one creation row by its id. Same shape as list_creations rows but with the FULL prompt and ' +
+        'description (listing rows cut them at 120 / 160 chars and flag it) — use it to re-read a prompt and ' +
+        'replay it with a variant. Fields: creationId, viewUrl, prompt (owner-only), description (vision-derived caption), toolKind, ' +
         'source, dimensions, folder, likes, nsfwFlagged, nsfwRate, username. Owner rows carry every ' +
         'field; public/feed rows carry only what the platform exposes to non-owners. Read-only, no ' +
         'credit spent. Use this after a generation completes if you need the description that was ' +
@@ -30,9 +31,10 @@ export const registerGetCreation: RegisterTool = (server, ctx) => {
     async (args, extra) => guard(async () => {
       const c = await ctx.client.creations.get(args.creationId, extra.signal);
       if (!c) return fail(new Error(`Creation ${args.creationId} not found or not visible to this key.`));
+      const blurb = c.description ? (c.description.length > 120 ? c.description.slice(0, 119).trimEnd() + '…' : c.description) : '';
       return ok(
-        `Creation ${c.creationId}${c.description ? ` — ${c.description.slice(0, 120)}` : ''}.`,
-        { creation: slimRow(c) },
+        `Creation ${c.creationId}${blurb ? ` — ${blurb}` : ''}. Full prompt and description are in the JSON block.`,
+        { creation: fullRow(c) },
       );
     }),
   );

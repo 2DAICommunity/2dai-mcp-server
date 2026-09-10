@@ -27,7 +27,7 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
         prompt: z.string().max(2500).optional()
           .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
-        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
+        quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         extractionDirective: z.string().optional()
           .describe('style-transfer only — what to extract from the refs (default "style").'),

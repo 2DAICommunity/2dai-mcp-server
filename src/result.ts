@@ -110,12 +110,19 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
   const rate = creation?.nsfwRate;
   const label = nsfwLabel(rate);
   const descriptionHidden = typeof rate === 'number' && rate >= DESCRIPTION_NSFW_MASK_RATE;
+  const raw = (creation?.raw ?? {}) as Record<string, unknown>;
+  const quality = (state as QueueState & { quality?: string }).quality ?? (typeof creation?.quality === 'string' ? creation.quality : undefined);
+  const durationSeconds = typeof raw.outputDuration === 'number' ? Math.round(raw.outputDuration * 10) / 10 : undefined;
+  const fps = typeof raw.outputFps === 'number' ? raw.outputFps : undefined;
   return {
     queueId: state.queueId,
     status: state.status,
     creationId: state.creationId,
     viewUrl: viewUrlFor(state.creationId),
     costUsd: state.costUsd,
+    ...(quality ? { quality } : {}),
+    ...(durationSeconds !== undefined ? { durationSeconds } : {}),
+    ...(fps !== undefined ? { fps } : {}),
     completedAt: state.completedAt,
     ...(creation?.width !== undefined ? { width: creation.width } : {}),
     ...(creation?.height !== undefined ? { height: creation.height } : {}),

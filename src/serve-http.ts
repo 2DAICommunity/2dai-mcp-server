@@ -97,6 +97,12 @@ export function startHttpServer(hosted: HostedConfig): void {
     }
   });
 
+  // Behind a load balancer with a long idle timeout (the hosted 2DAI ALB keeps
+  // sockets 4000 s) Node's default 5 s keep-alive makes the balancer reuse
+  // sockets we already closed → 502s after a burst. Outlive the balancer.
+  const keepAliveMs = Number(process.env.TWODAI_KEEP_ALIVE_TIMEOUT_MS ?? 4_010_000);
+  httpServer.keepAliveTimeout = keepAliveMs;
+  httpServer.headersTimeout = keepAliveMs + 5_000;
   httpServer.listen(hosted.port, hosted.bindHost, () => {
     process.stderr.write(
       `[2dai-mcp-server] http ready on ${hosted.bindHost}:${hosted.port} (version ${VERSION})\n`,

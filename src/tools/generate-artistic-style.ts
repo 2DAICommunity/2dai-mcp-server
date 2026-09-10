@@ -25,7 +25,7 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
         refCreationIds: z.array(z.string().length(32)).max(3).optional()
           .describe('Up to 3 subject images (creation ids) to place into the artistic style.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
-        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
+        quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block until ready (default true). Set false to get a queueId immediately.'),
       },

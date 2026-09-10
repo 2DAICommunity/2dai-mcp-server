@@ -13,15 +13,20 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Animate an existing still creation into a short clip. This SPENDS the account\'s credit — video ' +
         'costs several times an image. Takes ~1-3 minutes, so it usually returns a queueId to collect ' +
         'with check_generation rather than the finished clip. Durations: 5, 6.5 or 7.5 seconds ' +
-        '(7.5 is tier-gated). Recommended: quality "ultra" at 5 seconds — the best coherence for the price; ' +
-        '"ultimate" is 1080p with the longest wait. Output is 18 fps natively; frameInterpolation doubles it for twice the price.',
+        '(7.5 is tier-gated). Rendered length is shorter than the nominal value: 5 → ~4.3 s, 6.5 → ~5.8 s, 7.5 → ~6.7 s ' +
+        'at 18 fps native (the model\'s cadence); frameInterpolation doubles it to 36 fps for twice the price. ' +
+        'Recommended: quality "ultra" at 5 seconds — the best coherence for the price; "ultimate" is 1080p with the longest wait. ' +
+        'Subject identity holds for roughly the first 2.5–3.5 s of a clip, so write the cut at ~3 s, keep one action per shot, ' +
+        'and name the light colour in the motion prompt when the scene is lit in colour (limits colour drift). ' +
+        'Price = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
+        'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd.',
       inputSchema: {
         prompt: z.string().min(1).max(2500)
           .describe('How the scene should move (camera, motion, mood).'),
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate — from an earlier generation, upload_image or list_creations.'),
         duration: z.number().optional().describe('Clip length in seconds: 5 (recommended), 6.5 or 7.5 (7.5 is tier-gated). Default 5. Subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
-        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
+        quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
         style: z.string().optional().describe('Motion style id, or "auto" (default).'),
         frameInterpolation: z.boolean().optional().describe('Smoother motion via frame interpolation (costs more).'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),

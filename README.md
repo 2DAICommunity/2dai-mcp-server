@@ -130,9 +130,17 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   highest resolution for final masters; `fast` / `normal` are for drafts. Video: `ultra` at **5 seconds** is the
   recommended shot (best coherence for the price); `ultimate` is 1080p with the longest wait. `ultra` and
   `ultimate` are tier-gated — `get_account` lists what the connected account may submit, so never probe presets.
-- **Shots, not long takes.** Subjects stay coherent best on short clips: prefer several 5-second shots over one
-  6.5 / 7.5 s take, then cut them together. Output is 18 fps natively; `frameInterpolation: true` doubles it for
-  twice the price.
+- **Shots, not long takes.** Rendered length is shorter than the nominal value (5 → ~4.3 s, 6.5 → ~5.8 s,
+  7.5 → ~6.7 s at 18 fps native; `frameInterpolation: true` doubles it to 36 fps for twice the price). Subject
+  identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
+  shots rather than one long take.
+- **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation. `auto` draws the
+  preset, so pin it for a predictable cost; every submit returns the resolved `quality` next to `costUsd`.
+- **Batches.** `check_generation` takes `queueIds` (up to 25) to poll a whole batch of shots in one call.
+- **Prompts are never cut silently.** Listing rows shorten `prompt` / `description` with an ellipsis and a
+  `promptTruncated` flag; `get_creation` returns the full text, so a prompt can be re-read and replayed.
+- **References are checked at submit.** An unknown `inputCreationId` / `refCreationIds` is refused with
+  `CREATION_NOT_FOUND` and the missing ids, before any charge.
 - **Prompts** can be up to 2,500 characters (`prompt` and `negativePrompt`). TIXI enhancement is on by default and
   rewrites the prompt; pass `enhanced: false`-style options only where a tool exposes them.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`

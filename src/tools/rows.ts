@@ -8,12 +8,40 @@ import { viewUrlFor } from '../result.js';
  *
  *  `nsfwFlagged` / `nsfwRate` are surfaced on purpose: agents are expected to
  *  apply their own content safeguards on top of the platform's. */
+const PROMPT_CUT = 120;
+const DESCRIPTION_CUT = 160;
+
+/** Cut a long text for a listing row — never silently: the cut ends with an
+ *  ellipsis and the row carries a `…Truncated` flag, so an agent knows to
+ *  call get_creation for the full text. */
+function cut(text: string | undefined, max: number): { text?: string; truncated: boolean } {
+  if (typeof text !== 'string') return { text: undefined, truncated: false };
+  if (text.length <= max) return { text, truncated: false };
+  return { text: text.slice(0, max - 1).trimEnd() + '…', truncated: true };
+}
+
+/** The same row with the untruncated prompt and description — what
+ *  get_creation returns, so a prompt can be re-read and replayed verbatim. */
+export function fullRow(c: Creation): Record<string, unknown> {
+  return {
+    ...slimRow(c),
+    prompt: typeof c.prompt === 'string' ? c.prompt : undefined,
+    description: typeof c.description === 'string' ? c.description : undefined,
+    promptTruncated: undefined,
+    descriptionTruncated: undefined,
+  };
+}
+
 export function slimRow(c: Creation): Record<string, unknown> {
+  const p = cut(c.prompt, PROMPT_CUT);
+  const d = cut(c.description, DESCRIPTION_CUT);
   return {
     creationId: c.creationId,
     viewUrl: viewUrlFor(c.creationId),
-    prompt: typeof c.prompt === 'string' ? c.prompt.slice(0, 120) : undefined,
-    description: typeof c.description === 'string' ? c.description.slice(0, 160) : undefined,
+    prompt: p.text,
+    promptTruncated: p.truncated || undefined,
+    description: d.text,
+    descriptionTruncated: d.truncated || undefined,
     toolKind: c.toolKind,
     source: c.source,
     width: c.width,
