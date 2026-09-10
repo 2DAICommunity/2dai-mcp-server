@@ -24,10 +24,10 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
         tool: z.enum(REF_TOOLS).describe('Which reference tool to run.'),
         refCreationIds: z.array(z.string().length(32)).min(1).max(6)
           .describe('Creation ids to condition on. face/character-ref: 1-6 identity shots. style-transfer: 1-3 style sources. smart-edit: refs[0] = the image to EDIT, plus up to 3 support refs.'),
-        prompt: z.string().max(500).optional()
+        prompt: z.string().max(2500).optional()
           .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
-        quality: z.string().optional().describe('Quality preset id, or "auto" (default) to pick by tier.'),
+        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         extractionDirective: z.string().optional()
           .describe('style-transfer only — what to extract from the refs (default "style").'),

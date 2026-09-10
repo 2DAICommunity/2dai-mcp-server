@@ -23,7 +23,7 @@ export const registerGenerateWallpaper: RegisterTool = (server, ctx) => {
           .describe('Target wallpaper dimension id: "standard", "photo", "widescreen" or "ultrawide". Drives the price.'),
         refCreationIds: z.array(z.string().length(32)).max(3).optional()
           .describe('Up to 3 extra reference creations to steer the expanded areas.'),
-        prompt: z.string().max(500).optional()
+        prompt: z.string().max(2500).optional()
           .describe('Optional guidance for what the newly painted areas should contain.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block until ready (default true). Set false to get a queueId immediately.'),

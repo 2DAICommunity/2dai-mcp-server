@@ -14,13 +14,14 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
       description:
         'Generate an image on the 2DAI account from a text prompt. This SPENDS the account\'s credit. ' +
         'Returns the finished creation when it lands within the wait budget, otherwise a queueId to poll ' +
-        'with check_generation. Style and quality default to "auto" (the server picks by tier).',
+        'with check_generation. Style and quality default to "auto" (the server picks by tier). ' +
+        'Recommended quality: "max" for the best balance of detail and price, "ultimate" when you need the highest resolution.',
       inputSchema: {
-        prompt: z.string().min(1).max(500).describe('What to generate. Be specific; this drives the whole image.'),
+        prompt: z.string().min(1).max(2500).describe('What to generate. Be specific; this drives the whole image.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
-        quality: z.string().optional().describe('Quality preset id, or "auto" (default) to pick by tier.'),
+        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
-        negativePrompt: z.string().max(500).optional().describe('What to avoid in the image.'),
+        negativePrompt: z.string().max(2500).optional().describe('What to avoid in the image.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block until the image is ready (default true). Set false to get a queueId immediately.'),
       },

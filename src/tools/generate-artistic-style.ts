@@ -20,12 +20,12 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
         'Needs a prompt OR at least one subject ref. Returns the finished creation within the wait budget, ' +
         'else a queueId for check_generation.',
       inputSchema: {
-        prompt: z.string().max(500).optional().describe('Your subject. Optional when refCreationIds is given.'),
+        prompt: z.string().max(2500).optional().describe('Your subject. Optional when refCreationIds is given.'),
         artisticStyleId: z.string().optional().describe('An artisticStyleId from list_artistic_styles, or "auto" (default).'),
         refCreationIds: z.array(z.string().length(32)).max(3).optional()
           .describe('Up to 3 subject images (creation ids) to place into the artistic style.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
-        quality: z.string().optional().describe('Quality preset id, or "auto" (default) to pick by tier.'),
+        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block until ready (default true). Set false to get a queueId immediately.'),
       },

@@ -13,14 +13,15 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Animate an existing still creation into a short clip. This SPENDS the account\'s credit — video ' +
         'costs several times an image. Takes ~1-3 minutes, so it usually returns a queueId to collect ' +
         'with check_generation rather than the finished clip. Durations: 5, 6.5 or 7.5 seconds ' +
-        '(7.5 is tier-gated).',
+        '(7.5 is tier-gated). Recommended: quality "ultra" at 5 seconds — the best coherence for the price; ' +
+        '"ultimate" is 1080p with the longest wait. Output is 18 fps natively; frameInterpolation doubles it for twice the price.',
       inputSchema: {
-        prompt: z.string().min(1).max(500)
+        prompt: z.string().min(1).max(2500)
           .describe('How the scene should move (camera, motion, mood).'),
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate — from an earlier generation, upload_image or list_creations.'),
-        duration: z.number().optional().describe('Clip length in seconds: 5, 6.5 or 7.5 (tier-gated). Default 6.5.'),
-        quality: z.string().optional().describe('Quality preset id, or "auto" (default) to pick by tier.'),
+        duration: z.number().optional().describe('Clip length in seconds: 5 (recommended), 6.5 or 7.5 (7.5 is tier-gated). Default 5. Subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
+        quality: z.string().optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
         style: z.string().optional().describe('Motion style id, or "auto" (default).'),
         frameInterpolation: z.boolean().optional().describe('Smoother motion via frame interpolation (costs more).'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),

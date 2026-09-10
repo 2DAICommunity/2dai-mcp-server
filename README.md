@@ -126,20 +126,19 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 
 ## Notes for agents
 
-- Generation **spends real credit**. Check `get_account` first when unsure, and never
-  generate speculatively.
-- Long generations return a `queueId` — collect with `check_generation`; re-submitting
-  would be charged again.
-- Rapid identical submits inside the idempotency window are deduplicated, never
-  double-charged.
-- `upload_image` / `download_creation` paths are confined to the working directory unless
-  `TWODAI_ALLOW_ANY_PATH=1`.
-- **Generation replies** carry `viewUrl` (share with the user, opens in their 2DAI cloud
-  drive), an inline preview image so you can see the output, `nsfwLabel` + `nsfwRate`
-  for moderation, and dimensions. The `description` (vision-derived caption) is included
-  when `nsfwRate < 0.8`; at Near-nude+ it is withheld — call `get_creation` if the user
-  needs the caption. There is no `downloadUrl` in the reply: the CDN is bearer-gated,
-  so use `download_creation` for actual bytes.
+- **Presets.** Image: `max` is the recommended everyday pick (best balance of detail and price); `ultimate` is the
+  highest resolution for final masters; `fast` / `normal` are for drafts. Video: `ultra` at **5 seconds** is the
+  recommended shot (best coherence for the price); `ultimate` is 1080p with the longest wait. `ultra` and
+  `ultimate` are tier-gated — `get_account` lists what the connected account may submit, so never probe presets.
+- **Shots, not long takes.** Subjects stay coherent best on short clips: prefer several 5-second shots over one
+  6.5 / 7.5 s take, then cut them together. Output is 18 fps natively; `frameInterpolation: true` doubles it for
+  twice the price.
+- **Prompts** can be up to 2,500 characters (`prompt` and `negativePrompt`). TIXI enhancement is on by default and
+  rewrites the prompt; pass `enhanced: false`-style options only where a tool exposes them.
+- **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`
+  shows the headroom, `get_stats` the 30 / 90-day burn.
+- **Skill.** The package ships `skills/2dai/SKILL.md` — a platform guide for agents (quality ladder, costs,
+  the film recipe, brand-consistency recipe, limits). Point your agent runtime at it, or read it once per session.
 
 ## The 2DAI stack
 
