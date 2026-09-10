@@ -28,8 +28,9 @@ every result lands in the account's cloud drive as a *creation* with a 32-char i
 | `ultra` | higher res, slower, tier-gated | **recommended for video** — 800p, best coherence for the price | prints, large crops; every video shot |
 | `ultimate` | highest resolution, slowest, tier-gated | 1080p, longest wait, tier-gated | final masters only |
 
-`auto` (the default) lets the server pick by tier, weighted towards `max`. Prefer an explicit preset once you know
-what the shot is for. Reference tools (`face-ref`, `character-ref`, `style-transfer`, `smart-edit`) run on the same
+`auto` (the default) lets the server pick by tier, weighted towards `max`; for video it draws `max` / `ultra` only and
+never `ultimate` (that preset needs a GPU class that is not always online — ask for it explicitly). Prefer an explicit
+preset once you know what the shot is for. Reference tools (`face-ref`, `character-ref`, `style-transfer`, `smart-edit`) run on the same
 ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 3. Video — the rules that matter

@@ -135,7 +135,8 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
   shots rather than one long take.
 - **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation. `auto` draws the
-  preset, so pin it for a predictable cost; every submit returns the resolved `quality` next to `costUsd`.
+  preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
+  resolved `quality` next to `costUsd`.
 - **Batches.** `check_generation` takes `queueIds` (up to 25) to poll a whole batch of shots in one call.
 - **Prompts are never cut silently.** Listing rows shorten `prompt` / `description` with an ellipsis and a
   `promptTruncated` flag; `get_creation` returns the full text, so a prompt can be re-read and replayed.

@@ -16,7 +16,7 @@ export interface RequestContext extends ToolContext {
   signal: AbortSignal;
 }
 
-export const VERSION = '1.4.6';
+export const VERSION = '1.4.7';
 
 /** Builds the SDK client. `integration: 'mcp'` matters: it is how the
  *  platform attributes every creation made through this server to the MCP

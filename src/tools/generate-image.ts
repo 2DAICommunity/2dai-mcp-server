@@ -52,7 +52,7 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         const ticket = await submit();
         return ok(
           `Queued. Call check_generation with queueId "${ticket.queueId}" to collect it.`,
-          { queueId: ticket.queueId, status: ticket.status, costUsd: ticket.costUsd },
+          { queueId: ticket.queueId, status: ticket.status, quality: ticket.quality, costUsd: ticket.costUsd },
         );
       }
 
