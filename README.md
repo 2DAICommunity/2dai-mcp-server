@@ -77,7 +77,7 @@ want zero install and a single URL.
 | Tool | What it does | Scope | Spends credit |
 |---|---|---|---|
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
-| `generate_image` | Text-to-image (style/quality default to auto) | generate | **yes** |
+| `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default) | generate | **yes** |
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
 | `generate_video` | Animate a still creation into a short clip | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |

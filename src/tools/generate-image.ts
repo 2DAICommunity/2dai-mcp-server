@@ -25,6 +25,12 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
         negativePrompt: z.string().max(2500).optional().describe('What to avoid in the image.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
+        enhance: z.boolean().optional().describe(
+          'Run TIXI, the 2DAI prompt enhancer, before generating (default false). TIXI rewrites a short brief into a full ' +
+          'image prompt in a fixed order — subject and action, positions relative to objects and enclosures, secondary elements, ' +
+          'setting, style — which removes most scene-logic errors (hands through glass, characters inside the machine they operate). ' +
+          'Turn it on for scenes with several elements or interactions; leave it off when your prompt is already precise and must be honoured verbatim. No extra credit, ~2 s of latency.',
+        ),
         wait: z.boolean().optional().describe('Block until the image is ready (default true). Set false to get a queueId immediately.'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
@@ -38,6 +44,7 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         ...(args.style ? { style: args.style } : {}),
         ...(args.negativePrompt ? { negativePrompt: args.negativePrompt } : {}),
         ...(args.allowNSFW !== undefined ? { allowNSFW: args.allowNSFW } : {}),
+        ...(args.enhance === true ? { enhanced: true } : {}),
       };
       // Stable within the idempotency window so a host retry of the same call
       // is refused by the API instead of charged twice. See idempotency.ts.

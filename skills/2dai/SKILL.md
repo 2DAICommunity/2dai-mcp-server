@@ -59,8 +59,12 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
   full text — use it to re-read a prompt before replaying it with a variant.
 - Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the
   missing ids, before any charge.
-- TIXI (the platform's prompt enhancer) rewrites prompts by default. Keep the brief concrete: subject, action,
-  framing, lens, light, palette, mood. Put hard constraints (text to render, exact colours, "no lettering") first.
+- TIXI (the platform's prompt enhancer) is **off by default** on `generate_image`: your prompt reaches the model
+  verbatim (plus the style's own lead-in). Pass `enhance: true` for scenes with several elements or
+  interactions — TIXI restructures the brief (subject and action, positions relative to objects and enclosures,
+  secondary elements, setting, style) and removes most scene-logic errors. Either way keep the brief concrete:
+  subject, action, framing, light, palette, mood. Put hard constraints (text to render, exact colours,
+  "no lettering") first. Reference tools (`face-ref`, `character-ref`) and wallpaper resize always run TIXI.
 - Text inside images is unreliable at every preset; keep numbers and lettering short and check them on the result.
 
 ## 5. Recipe — a short film from a brief
