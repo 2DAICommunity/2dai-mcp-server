@@ -44,7 +44,14 @@ export function describeError(err: unknown): string {
     return 'Not found — the creation, folder or queue id does not exist on this account (or was deleted).';
   }
   if (err instanceof GenerationFailedError) {
-    return `The generation failed server-side${err.message ? `: ${err.message}` : ''}. Nothing was charged; try again.`;
+    // Current servers send a readable outcome ("…You weren't charged…"); older ones send an
+    // internal `CODE: detail` string or nothing.
+    const outcomeMessage = (err as { errorMessage?: string }).errorMessage;
+    if (outcomeMessage) return outcomeMessage;
+    const msg = err.message ?? '';
+    const readable = msg.length > 0 && !/^Generation \w+$/.test(msg) && !/^[A-Z][A-Z0-9_]{2,}(:|$)/.test(msg);
+    if (readable) return msg;
+    return `The generation failed server-side${msg && !/^Generation \w+$/.test(msg) ? `: ${msg}` : ''}. Nothing was charged; try again.`;
   }
   if (err instanceof TimeoutError) {
     return 'Timed out waiting for the generation. It is probably still running — call check_generation with the queueId.';

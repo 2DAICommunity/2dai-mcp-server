@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
 import type { QueueState } from '2dai-cloud-sdk';
-import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, outcomeSuffix, outcomeText } from '../result.js';
 
 /** The other half of the adaptive wait: whenever a generation outlives the
  *  wait budget, this is how the agent collects it. */
@@ -33,7 +33,7 @@ export const registerCheckGeneration: RegisterTool = (server, ctx) => {
         const byId = new Map(done.map((s, i) => [s.queueId, creations[i]]));
         const lines = states.map(s => {
           if (s.status === 'completed') return `${s.queueId}: done → creationId ${s.creationId}${nsfwProseFragment(byId.get(s.queueId))}`;
-          if (TERMINAL.includes(s.status)) return `${s.queueId}: ${s.status}${s.error ? ` — ${s.error}` : ''}`;
+          if (TERMINAL.includes(s.status)) return `${s.queueId}: ${s.status}${outcomeText(s) ? ` — ${outcomeText(s)}` : ''}`;
           return `${s.queueId}: ${s.status}`;
         });
         const pending = states.filter(s => !TERMINAL.includes(s.status) && s.status !== 'completed').length;
@@ -62,7 +62,7 @@ export const registerCheckGeneration: RegisterTool = (server, ctx) => {
 
       if (TERMINAL.includes(state.status)) {
         return fail(new Error(
-          `Generation ${state.queueId} ended as "${state.status}"${state.error ? `: ${state.error}` : ''}.`,
+          `Generation ${state.queueId} ended as "${state.status}"${outcomeSuffix(state)}`,
         ));
       }
 

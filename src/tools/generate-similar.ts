@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 
 export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
@@ -45,7 +45,7 @@ export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
       if (outcome.kind === 'failed') {
         return fail(new Error(
           `Generation ${outcome.state.queueId} ended as "${outcome.state.status}"` +
-          `${outcome.state.error ? `: ${outcome.state.error}` : ''}.`,
+          outcomeSuffix(outcome.state),
         ));
       }
 

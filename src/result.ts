@@ -176,3 +176,16 @@ export function pendingResult(ticket: QueueTicket, lastStatus?: string): CallToo
     { queueId: ticket.queueId, status: lastStatus ?? ticket.status, pending: true },
   );
 }
+
+/** Readable outcome of a finished queue state: the server's `errorMessage` (current servers),
+ *  else the internal `error` string (older servers). Read loosely so it builds on any SDK. */
+export function outcomeText(state: { error?: string }): string | undefined {
+  return (state as { errorMessage?: string }).errorMessage || state.error || undefined;
+}
+
+/** `: <outcome>.` for a "ended as …" sentence, without doubling the final punctuation. */
+export function outcomeSuffix(state: { error?: string }): string {
+  const text = outcomeText(state);
+  if (!text) return '.';
+  return /[.!?]$/.test(text) ? `: ${text}` : `: ${text}.`;
+}
