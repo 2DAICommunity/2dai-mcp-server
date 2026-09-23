@@ -146,6 +146,10 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   rewrites the prompt; pass `enhanced: false`-style options only where a tool exposes them.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`
   shows the headroom, `get_stats` the 30 / 90-day burn.
+- **Content rating is not an error.** Every output carries `nsfwLabel` / `nsfwRate`. From Near-nude (0.8) the
+  reply adds `contentRestricted: true`: the generation succeeded and was charged, the creation is kept but masked
+  in the owner's drive, cannot be published, and its caption is withheld (`get_creation` returns it). Hand over
+  the `viewUrl` for review instead of retrying. Only `NSFW_MAX_EXCEEDED` discards an output, uncharged.
 - **Skill.** The package ships `skills/2dai/SKILL.md` — a platform guide for agents (quality ladder, costs,
   the film recipe, brand-consistency recipe, limits). Point your agent runtime at it, or read it once per session.
 
