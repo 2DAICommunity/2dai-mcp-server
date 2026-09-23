@@ -65,7 +65,7 @@ export function describeError(err: unknown): string {
       return 'Permanent delete only works on a trashed creation — call organise_creation with action "trash" first.';
     }
     if (err.code === 'NSFW_NOT_PUBLISHABLE') {
-      return 'This creation is NSFW-flagged and cannot be made public.';
+      return 'This creation is content-rated (Near-nude or above) and cannot be made public. It stays in the owner\'s private drive, masked until they reveal it.';
     }
     if (err.code === 'UPLOADED_NOT_PUBLISHABLE') {
       return 'Raw uploads cannot be published — only the account\'s own AI generations can go public.';

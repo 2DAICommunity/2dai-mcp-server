@@ -49,9 +49,11 @@ export function createServer(config: Config, client: Client): McpServer {
         'with a savePath. Every generation reply also carries an inline preview image so you can see ' +
         'what came out without an extra call. ' +
         'CONTENT: generation replies include `nsfwLabel` (SFW / Suggestive / Near-nude / Adult NSFW / ' +
-        'Prohibited) and `nsfwRate` (0..1). The vision-derived `description` is withheld from the ' +
-        'generation reply at Near-nude+ (rate ≥ 0.8) — call get_creation for the caption if the user ' +
-        'needs it. ' +
+        'Prohibited) and `nsfwRate` (0..1). From Near-nude (rate ≥ 0.8) the reply also carries ' +
+        '`contentRestricted: true`: the generation succeeded and was charged, the creation is kept but ' +
+        'masked in the owner\'s drive, cannot be published, and its `description` is withheld from the ' +
+        'generation reply — call get_creation for the caption if the user needs it. Never present a ' +
+        'restricted creation as a failure; hand over the viewUrl for review. ' +
         'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
         'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud. ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',

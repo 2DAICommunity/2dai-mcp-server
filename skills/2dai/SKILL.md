@@ -89,7 +89,20 @@ per shot. Check `get_account` before the shot loop.
 - Generate variations at `max`, promote the keeper to `ultimate`, file everything with `manage_folder` and
   `organise_creation`, publish with `publish_creation` only when the account owner asked for it.
 
-## 7. Do not
+## 7. Content rating — a flagged result is not an error
+
+- Every output is rated by the platform's classifier: `nsfwLabel` SFW / Suggestive / Near-nude / Adult NSFW /
+  Prohibited, `nsfwRate` 0..1. Suggestive (0.6) changes nothing.
+- From Near-nude (0.8) up the reply carries `contentRestricted: true`: the creation **succeeded and was charged**,
+  it is stored in the owner's drive but **masked** there until they reveal it, it **cannot be published**, and the
+  vision caption is withheld from generation replies (`get_creation` returns it). Say so plainly and hand over the
+  `viewUrl` for review — do not retry, do not call it a failure.
+- A prompt the platform judges explicit makes the result explicit by design, even when the picture looks tame:
+  the rating follows the request as much as the pixels.
+- The only rejection is the platform ceiling (`NSFW_MAX_EXCEEDED` → readable `errorMessage`): the output is
+  discarded, nothing is charged, and a reworded prompt is the way forward.
+
+## 8. Do not
 
 - Probe presets or durations by submitting — read them from `get_account`.
 - Request 6.5 / 7.5 s clips for character shots.

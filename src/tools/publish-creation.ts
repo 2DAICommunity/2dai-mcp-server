@@ -10,7 +10,7 @@ export const registerPublishCreation: RegisterTool = (server, ctx) => {
       description:
         'Flip ONE creation\'s public visibility (needs the "publish" scope). Publishing puts it on the ' +
         '2DAI public feed. Only the account\'s own AI generations can go public — raw uploads and ' +
-        'NSFW-flagged creations are refused by the platform. Unpublish always works on a public row. ' +
+        'content-rated creations (nsfwFlagged / contentRestricted) are refused by the platform. Unpublish always works on a public row. ' +
         'Publish only when the user explicitly asked.',
       inputSchema: {
         action: z.enum(['publish', 'unpublish']).describe('What to do.'),

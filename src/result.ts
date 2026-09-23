@@ -129,24 +129,34 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
     ...(typeof rate === 'number' ? { nsfwRate: rate } : {}),
     ...(label ? { nsfwLabel: label } : {}),
     ...(creation?.nsfwFlagged ? { nsfwFlagged: true } : {}),
+    ...(isContentRestricted(creation) ? { contentRestricted: true } : {}),
     ...(creation?.description && !descriptionHidden ? { description: creation.description } : {}),
     ...(descriptionHidden ? { descriptionHidden: true } : {}),
   };
 }
 
+/** A creation the platform keeps but restricts: flagged by the content rating
+ *  (Near-nude and up). It is charged and stored like any other, but masked in
+ *  the owner's drive, never publishable, and its caption is withheld here. */
+export function isContentRestricted(creation: Creation | undefined): boolean {
+  const rate = creation?.nsfwRate;
+  return creation?.nsfwFlagged === true || (typeof rate === 'number' && rate >= DESCRIPTION_NSFW_MASK_RATE);
+}
+
 /** Prose fragment appended to the generation-ready line when the content
- *  scored above SFW. SFW is the norm and would just be noise; anything from
- *  Suggestive up warrants a heads-up so the agent can decide whether to hand
- *  the creation to the user as-is. */
+ *  scored above SFW. SFW is the norm and would just be noise; Suggestive gets a
+ *  one-word heads-up; a restricted creation gets the full picture, because a
+ *  bare label ("Near-nude") reads like a failure to an agent when the
+ *  generation actually succeeded and was charged. */
 export function nsfwProseFragment(creation: Creation | undefined): string {
   const rate = creation?.nsfwRate;
   const label = nsfwLabel(rate);
   if (!label || label === 'SFW' || typeof rate !== 'number') return '';
   const floored = Math.floor(rate * 100 + 1e-10) / 100;
-  const gated = rate >= DESCRIPTION_NSFW_MASK_RATE
-    ? ' Description withheld at this tier — call get_creation if you need the caption.'
-    : '';
-  return ` NSFW: ${label} (${floored.toFixed(2)}).${gated}`;
+  if (!isContentRestricted(creation)) return ` Content rating: ${label} (${floored.toFixed(2)}).`;
+  return ` Content rating: ${label} (${floored.toFixed(2)}) — the creation is kept and charged as usual, but it is ` +
+    `masked in the owner's drive until they reveal it, it cannot be published, and its caption is withheld here ` +
+    `(get_creation returns it). This is not an error: tell the user to open the viewUrl to review it on 2DAI.`;
 }
 
 /** Run the creation-metadata hydrate and the CDN preview fetch in ONE round-trip:
