@@ -61,6 +61,9 @@ export function describeError(err: unknown): string {
     if (err.code === 'IDEMPOTENT_RETRY') {
       return 'This exact generation was just submitted — it was not charged twice. Use list_creations or check_generation to find the original.';
     }
+    if (err.code === 'INVALID_PROMPT') {
+      return 'The prompt was refused: it is empty or longer than this server accepts. Nothing was charged. Call get_account for recommendation.promptMaxChars and shorten the prompt (and negativePrompt) to fit.';
+    }
     if (err.code === 'NOT_IN_TRASH') {
       return 'Permanent delete only works on a trashed creation — call organise_creation with action "trash" first.';
     }

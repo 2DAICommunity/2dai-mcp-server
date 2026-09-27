@@ -54,7 +54,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 4. Prompts
 
-- Up to **2,500 characters** for `prompt` and `negativePrompt`.
+- Up to **4,000 characters** (`get_account` → `promptMaxChars`) for `prompt` and `negativePrompt`.
 - Listing rows shorten `prompt` and `description` (ellipsis + `promptTruncated` flag); `get_creation` returns the
   full text — use it to re-read a prompt before replaying it with a variant.
 - Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the
@@ -64,7 +64,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
   interactions — TIXI restructures the brief (subject and action, positions relative to objects and enclosures,
   secondary elements, setting, style) and removes most scene-logic errors. Either way keep the brief concrete:
   subject, action, framing, light, palette, mood. Put hard constraints (text to render, exact colours,
-  "no lettering") first. Reference tools (`face-ref`, `character-ref`) and wallpaper resize always run TIXI.
+  "no lettering") first. Reference tools (`face-ref`, `character-ref`), wallpaper resize and the artistic-style tool always run TIXI.
 - Text inside images is unreliable at every preset; keep numbers and lettering short and check them on the result.
 
 ## 5. Recipe — a short film from a brief

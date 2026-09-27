@@ -59,7 +59,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           recommendation: {
             image: 'max — best balance of detail and price; ultimate — highest resolution for final masters',
             video: 'ultra at 5 seconds — best coherence for the price; ultimate — 1080p, longest wait',
-            promptMaxChars: 2500,
+            promptMaxChars: me.promptMaxChars ?? 3000,
           },
           platform: {
             model: 'Gen 7.2',

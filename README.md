@@ -142,8 +142,9 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   `promptTruncated` flag; `get_creation` returns the full text, so a prompt can be re-read and replayed.
 - **References are checked at submit.** An unknown `inputCreationId` / `refCreationIds` is refused with
   `CREATION_NOT_FOUND` and the missing ids, before any charge.
-- **Prompts** can be up to 2,500 characters (`prompt` and `negativePrompt`). TIXI enhancement is on by default and
-  rewrites the prompt; pass `enhanced: false`-style options only where a tool exposes them.
+- **Prompts** can be up to 4,000 characters for `prompt` and `negativePrompt` (`get_account` reports the live cap as `promptMaxChars`).
+  TIXI enhancement is off by default on `generate_image` (`enhance: true` rewrites a short brief into a full prompt);
+  `face-ref` and `character-ref`, wallpaper resize and the artistic-style tool always run it.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`
   shows the headroom, `get_stats` the 30 / 90-day burn.
 - **Content rating is not an error.** Every output carries `nsfwLabel` / `nsfwRate`. From Near-nude (0.8) the

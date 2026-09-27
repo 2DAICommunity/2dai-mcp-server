@@ -21,7 +21,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Price = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
         'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd.',
       inputSchema: {
-        prompt: z.string().min(1).max(2500)
+        prompt: z.string().min(1).max(4000)
           .describe('How the scene should move (camera, motion, mood).'),
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate — from an earlier generation, upload_image or list_creations.'),
