@@ -24,8 +24,8 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
         tool: z.enum(REF_TOOLS).describe('Which reference tool to run.'),
         refCreationIds: z.array(z.string().length(32)).min(1).max(6)
           .describe('Creation ids to condition on. face/character-ref: 1-6 identity shots. style-transfer: 1-3 style sources. smart-edit: refs[0] = the image to EDIT, plus up to 3 support refs.'),
-        prompt: z.string().max(4000).optional()
-          .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required.'),
+        prompt: z.string().max(8000).optional()
+          .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required. Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),

@@ -61,6 +61,12 @@ export function describeError(err: unknown): string {
     if (err.code === 'IDEMPOTENT_RETRY') {
       return 'This exact generation was just submitted — it was not charged twice. Use list_creations or check_generation to find the original.';
     }
+    if (err.code === 'PROMPT_TOO_LONG') {
+      const d = (err as any).details ?? {};
+      const max = typeof d.max === 'number' ? d.max : undefined;
+      const next = d.next && typeof d.next.max === 'number' ? ` ${d.next.tier} raises it to ${d.next.max}.` : '';
+      return `The prompt is longer than this account accepts${max ? ` (${max} characters on tier ${d.tier ?? '?'})` : ''}. Nothing was charged. Shorten the prompt (and negativePrompt) to fit.${next}`;
+    }
     if (err.code === 'INVALID_PROMPT') {
       return 'The prompt was refused: it is empty or longer than this server accepts. Nothing was charged. Call get_account for recommendation.promptMaxChars and shorten the prompt (and negativePrompt) to fit.';
     }

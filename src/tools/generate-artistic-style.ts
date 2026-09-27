@@ -20,7 +20,7 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
         'Needs a prompt OR at least one subject ref. Returns the finished creation within the wait budget, ' +
         'else a queueId for check_generation.',
       inputSchema: {
-        prompt: z.string().max(4000).optional().describe('Your subject. Optional when refCreationIds is given.'),
+        prompt: z.string().max(8000).optional().describe('Your subject. Optional when refCreationIds is given. Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
         artisticStyleId: z.string().optional().describe('An artisticStyleId from list_artistic_styles, or "auto" (default).'),
         refCreationIds: z.array(z.string().length(32)).max(3).optional()
           .describe('Up to 3 subject images (creation ids) to place into the artistic style.'),

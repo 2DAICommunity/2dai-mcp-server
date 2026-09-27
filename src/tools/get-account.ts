@@ -24,6 +24,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         qualities?: { image: Preset[]; video: Preset[] };
         videoDurations?: Duration[];
         defaultVideoDuration?: number;
+        promptMaxCharsNext?: { tier: string; max: number };
       };
       const cap = me.key.spendLimitUsd;
       const capLine = cap === null
@@ -46,6 +47,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         `Account ${me.username ?? me.userId} — $${me.creditUsd.toFixed(2)} credit, tier ${me.tier}. ` +
         `Key "${me.key.label}" has scopes [${me.key.scopes.join(', ')}]; ${capLine}. ` +
         presetLine('image') + presetLine('video') + durationLine +
+        `Prompts up to ${me.promptMaxChars ?? 3000} characters on this account${me.promptMaxCharsNext ? ` (${me.promptMaxCharsNext.tier} raises it to ${me.promptMaxCharsNext.max})` : ''}. ` +
         `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud.`,
         {
           userId: me.userId,
@@ -60,6 +62,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
             image: 'max — best balance of detail and price; ultimate — highest resolution for final masters',
             video: 'ultra at 5 seconds — best coherence for the price; ultimate — 1080p, longest wait',
             promptMaxChars: me.promptMaxChars ?? 3000,
+            ...(me.promptMaxCharsNext ? { promptMaxCharsNext: me.promptMaxCharsNext } : {}),
           },
           platform: {
             model: 'Gen 7.2',

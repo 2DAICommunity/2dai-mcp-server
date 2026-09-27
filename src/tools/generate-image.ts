@@ -19,11 +19,11 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier), so pin the ' +
         'preset for a predictable cost. The response carries the resolved quality and costUsd.',
       inputSchema: {
-        prompt: z.string().min(1).max(4000).describe('What to generate. Be specific; this drives the whole image.'),
+        prompt: z.string().min(1).max(8000).describe('What to generate. Be specific; this drives the whole image. Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
-        negativePrompt: z.string().max(4000).optional().describe('What to avoid in the image.'),
+        negativePrompt: z.string().max(8000).optional().describe('What to avoid in the image. Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         enhance: z.boolean().optional().describe(
           'Run TIXI, the 2DAI prompt enhancer, before generating (default false). TIXI rewrites a short brief into a full ' +

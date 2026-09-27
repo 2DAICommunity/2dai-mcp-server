@@ -54,7 +54,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 4. Prompts
 
-- Up to **4,000 characters** (`get_account` → `promptMaxChars`) for `prompt` and `negativePrompt`.
+- Prompt length follows the account's tier: **1,500 characters as a Guest, up to 8,000 from Supporter** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
 - Listing rows shorten `prompt` and `description` (ellipsis + `promptTruncated` flag); `get_creation` returns the
   full text — use it to re-read a prompt before replaying it with a variant.
 - Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the

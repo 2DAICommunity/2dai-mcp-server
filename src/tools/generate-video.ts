@@ -21,8 +21,8 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Price = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
         'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd.',
       inputSchema: {
-        prompt: z.string().min(1).max(4000)
-          .describe('How the scene should move (camera, motion, mood).'),
+        prompt: z.string().min(1).max(8000)
+          .describe('How the scene should move (camera, motion, mood). Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate — from an earlier generation, upload_image or list_creations.'),
         duration: z.number().optional().describe('Clip length in seconds: 5 (recommended), 6.5 or 7.5 (7.5 is tier-gated). Default 5. Subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
