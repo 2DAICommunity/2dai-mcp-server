@@ -79,7 +79,7 @@ want zero install and a single URL.
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
 | `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default) | generate | **yes** |
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip (Video, or Video Next with sound via `videoModel: "next"`) | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
@@ -130,10 +130,15 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   highest resolution for final masters; `fast` / `normal` are for drafts. Video: `ultra` at **5 seconds** is the
   recommended shot (best coherence for the price); `ultimate` is 1080p with the longest wait. `ultra` and
   `ultimate` are tier-gated — `get_account` lists what the connected account may submit, so never probe presets.
-- **Shots, not long takes.** Rendered length is shorter than the nominal value (5 → ~4.3 s, 6.5 → ~5.8 s,
-  7.5 → ~6.7 s at 18 fps native; `frameInterpolation: true` doubles it to 36 fps for twice the price). Subject
+- **Shots, not long takes.** Clips run 5, 6 or 7 s at 18 fps native (`frameInterpolation: true` doubles the frame
+  rate to 36 fps for twice the price). Subject
   identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
   shots rather than one long take.
+- **Video Next** (`videoModel: "next"`, preview) renders clips **with sound** from a first frame plus up to 6
+  `refCreationIds` (each adds a surcharge), 1, 5, 8 (Believer+), 10 (Supporter+), 12, 15 or 20 s (Founder), in
+  `fast` below Founder, with an optional `aspectRatio` (`auto` keeps the first frame's ratio). Long clips render for
+  several minutes: expect a `queueId` and collect it with `check_generation`. `get_account` lists the Video Next
+  lengths and presets the account may submit.
 - **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation. `auto` draws the
   preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
   resolved `quality` next to `costUsd`.
@@ -142,7 +147,7 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   `promptTruncated` flag; `get_creation` returns the full text, so a prompt can be re-read and replayed.
 - **References are checked at submit.** An unknown `inputCreationId` / `refCreationIds` is refused with
   `CREATION_NOT_FOUND` and the missing ids, before any charge.
-- **Prompts** are capped per account tier (1,500 characters as a Guest, up to 8,000 from Supporter): `get_account` reports the exact cap as `promptMaxChars` and the tier that raises it as `promptMaxCharsNext`; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
+- **Prompts** are capped per account tier (1,500 characters as a Guest, 8,000 at Supporter, 10,000 at Founder): `get_account` reports the exact cap as `promptMaxChars` and the tier that raises it as `promptMaxCharsNext`; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
   TIXI enhancement is off by default on `generate_image` (`enhance: true` rewrites a short brief into a full prompt);
   `face-ref` and `character-ref`, wallpaper resize and the artistic-style tool always run it.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`

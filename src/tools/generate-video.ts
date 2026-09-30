@@ -12,20 +12,29 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
       description:
         'Animate an existing still creation into a short clip. This SPENDS the account\'s credit — video ' +
         'costs several times an image. Takes ~1-3 minutes, so it usually returns a queueId to collect ' +
-        'with check_generation rather than the finished clip. Durations: 5, 6.5 or 7.5 seconds ' +
-        '(7.5 is tier-gated). Rendered length is shorter than the nominal value: 5 → ~4.3 s, 6.5 → ~5.8 s, 7.5 → ~6.7 s ' +
-        'at 18 fps native (the model\'s cadence); frameInterpolation doubles it to 36 fps for twice the price. ' +
+        'with check_generation rather than the finished clip. Durations: 5, 6 or 7 seconds ' +
+        '(7 is tier-gated), at 18 fps native (the model\'s cadence); frameInterpolation doubles the frame rate to 36 fps for twice the price. ' +
         'Recommended: quality "ultra" at 5 seconds — the best coherence for the price; "ultimate" is 1080p with the longest wait. ' +
         'Subject identity holds for roughly the first 2.5–3.5 s of a clip, so write the cut at ~3 s, keep one action per shot, ' +
         'and name the light colour in the motion prompt when the scene is lit in colour (limits colour drift). ' +
         'Price = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
-        'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd.',
+        'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
+        'videoModel "next" = Video Next preview: clips WITH sound, from the first frame plus up to 6 refCreationIds ' +
+        '(characters, props, places — each adds a surcharge), 1, 5, 8 (Believer+), 10 (Supporter+), 12, 15 or 20 seconds (Founder), ' +
+        'Fast quality below Founder, optional aspectRatio; no frameInterpolation. Long Video Next clips render for several minutes: ' +
+        'expect a queueId to collect with check_generation. get_account lists the Video Next lengths and qualities open to the account.',
       inputSchema: {
-        prompt: z.string().min(1).max(8000)
-          .describe('How the scene should move (camera, motion, mood). Lower on Guest–Believer accounts: see get_account → recommendation.promptMaxChars.'),
+        prompt: z.string().min(1).max(10000)
+          .describe('How the scene should move (camera, motion, mood). Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         inputCreationId: z.string().length(32)
-          .describe('The still creation to animate — from an earlier generation, upload_image or list_creations.'),
-        duration: z.number().optional().describe('Clip length in seconds: 5 (recommended), 6.5 or 7.5 (7.5 is tier-gated). Default 5. Subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
+          .describe('The still creation to animate (the first frame) — from an earlier generation, upload_image or list_creations.'),
+        videoModel: z.enum(['default', 'next']).optional()
+          .describe('"default" (Video: silent, 5, 6 or 7 s) or "next" (Video Next preview: with sound, 1 to 20 s, up to 6 references). Default "default".'),
+        refCreationIds: z.array(z.string().length(32)).max(6).optional()
+          .describe('Video Next only: up to 6 more reference creations after the first frame (characters, props, places). Each adds a surcharge.'),
+        aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16']).optional()
+          .describe('Video Next only: output shape. "auto" (default) keeps the first frame\'s ratio.'),
+        duration: z.number().optional().describe('Clip length in seconds. Video: 5 (recommended), 6 or 7 (7 is tier-gated). Video Next: 1, 5, 8, 10, 12, 15 or 20 (8 s Believer+, 10 s Supporter+, 12 s and up Founder). Default 5. On Video, subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
         style: z.string().optional().describe('Motion style id, or "auto" (default).'),
         frameInterpolation: z.boolean().optional().describe('Smoother motion via frame interpolation (costs more).'),
@@ -39,6 +48,9 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
       const params = {
         prompt: args.prompt,
         inputCreationId: args.inputCreationId,
+        ...(args.videoModel ? { videoModel: args.videoModel } : {}),
+        ...(args.videoModel === 'next' && args.refCreationIds?.length ? { refCreationIds: args.refCreationIds } : {}),
+        ...(args.videoModel === 'next' && args.aspectRatio ? { aspectRatio: args.aspectRatio } : {}),
         ...(args.duration !== undefined ? { duration: args.duration } : {}),
         ...(args.quality ? { quality: args.quality } : {}),
         ...(args.style ? { style: args.style } : {}),

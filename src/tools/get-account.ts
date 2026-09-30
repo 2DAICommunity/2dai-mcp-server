@@ -21,32 +21,45 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
       type Preset = { id: string; name: string; description: string; allowed: boolean; recommended: boolean };
       type Duration = { value: number; label: string; locked: boolean; recommended?: boolean };
       const me = await ctx.client.me(extra.signal) as Awaited<ReturnType<typeof ctx.client.me>> & {
-        qualities?: { image: Preset[]; video: Preset[] };
+        qualities?: { image: Preset[]; video: Preset[]; videoNext?: Preset[] };
         videoDurations?: Duration[];
         defaultVideoDuration?: number;
+        videoDurationsNext?: Duration[];
+        defaultVideoDurationNext?: number;
+        canUseVideo?: boolean;
+        modelChannels?: { video: { default: string | null; next: string | null } };
         promptMaxCharsNext?: { tier: string; max: number };
       };
       const cap = me.key.spendLimitUsd;
       const capLine = cap === null
         ? 'no cap on this key'
         : `$${me.key.spentUsd.toFixed(2)} of $${cap.toFixed(2)} spent on this key`;
-      const presetLine = (type: 'image' | 'video'): string => {
+      const presetLine = (type: 'image' | 'video' | 'videoNext'): string => {
         const list = me.qualities?.[type] ?? [];
         if (list.length === 0) return '';
         const allowed = list.filter(q => q.allowed).map(q => q.id + (q.recommended ? ' (recommended)' : ''));
         const locked = list.filter(q => !q.allowed).map(q => q.id);
-        return `${type} presets: ${allowed.join(', ')}` + (locked.length ? ` — locked on this tier: ${locked.join(', ')}` : '') + '. ';
+        const name = type === 'videoNext' ? 'Video Next' : type;
+        return `${name} presets: ${allowed.length ? allowed.join(', ') : 'none'}` + (locked.length ? ` — locked on this tier: ${locked.join(', ')}` : '') + '. ';
       };
+      const nextAvailable = !!me.modelChannels?.video?.next && (me.videoDurationsNext?.length ?? 0) > 0;
+      const nextLine = (() => {
+        if (!nextAvailable) return '';
+        const list = me.videoDurationsNext ?? [];
+        return 'Video Next (videoModel "next", with sound) durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
+          (me.defaultVideoDurationNext ? `; default ${me.defaultVideoDurationNext}s. ` : '. ') + presetLine('videoNext');
+      })();
       const durationLine = (() => {
         const list = me.videoDurations ?? [];
         if (list.length === 0) return '';
-        return 'Video durations: ' + list.map(d => `${d.value}s${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
+        return 'Video durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
           (me.defaultVideoDuration ? `; default ${me.defaultVideoDuration}s. ` : '. ');
       })();
       return ok(
         `Account ${me.username ?? me.userId} — $${me.creditUsd.toFixed(2)} credit, tier ${me.tier}. ` +
         `Key "${me.key.label}" has scopes [${me.key.scopes.join(', ')}]; ${capLine}. ` +
-        presetLine('image') + presetLine('video') + durationLine +
+        presetLine('image') + presetLine('video') + durationLine + nextLine +
+        (me.canUseVideo === false ? 'Video is not available on this tier (it opens at Holder). ' : '') +
         `Prompts up to ${me.promptMaxChars ?? 3000} characters on this account${me.promptMaxCharsNext ? ` (${me.promptMaxCharsNext.tier} raises it to ${me.promptMaxCharsNext.max})` : ''}. ` +
         `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud.`,
         {
@@ -58,6 +71,8 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           qualities: me.qualities,
           videoDurations: me.videoDurations,
           defaultVideoDuration: me.defaultVideoDuration,
+          ...(me.canUseVideo !== undefined ? { canUseVideo: me.canUseVideo } : {}),
+          ...(nextAvailable ? { videoDurationsNext: me.videoDurationsNext, defaultVideoDurationNext: me.defaultVideoDurationNext } : {}),
           recommendation: {
             image: 'max — best balance of detail and price; ultimate — highest resolution for final masters',
             video: 'ultra at 5 seconds — best coherence for the price; ultimate — 1080p, longest wait',

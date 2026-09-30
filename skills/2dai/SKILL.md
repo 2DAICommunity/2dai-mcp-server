@@ -35,8 +35,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 3. Video — the rules that matter
 
-- **Durations** 5 / 6.5 / 7.5 s (7.5 is tier-gated) render shorter than their nominal value: 5 → ~4.3 s,
-  6.5 → ~5.8 s, 7.5 → ~6.7 s at 18 fps (the model's native cadence). **Use 5 s.** Subject identity holds for
+- **Durations** 5 / 6 / 7 s (7 is tier-gated) at 18 fps (the model's native cadence). **Use 5 s.** Subject identity holds for
   roughly the first 2.5–3.5 s of a clip (the head melts, the figure leaves the frame, a set dissolves after that):
   write the cut at ~3 s, one action per shot, several 5-second shots rather than one long take.
 - **Colour drift** under coloured light (a lavender still turning mint-green in motion) is limited by naming the
@@ -44,6 +43,10 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 - **`ultra` at 5 s** is the recommended shot. `ultimate` only for a final master you will not re-render.
 - **Frame rate** is 18 fps natively. `frameInterpolation: true` doubles it (36 fps) for twice the price — apply it on
   the shots you keep, not on tests.
+- **Video Next** (`generate_video` with `videoModel: "next"`, preview): clips **with sound**, a first frame plus up to
+  6 `refCreationIds` (characters, props, places — each adds a surcharge), 1, 5, 8 (Believer+), 10 (Supporter+),
+  12, 15 or 20 s (Founder), `fast` below Founder, optional `aspectRatio`. Read the open lengths and presets from
+  `get_account`; a 15–20 s clip renders for several minutes.
 - A video takes 1–3 minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
   pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
   still-waiting job.
@@ -54,7 +57,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 4. Prompts
 
-- Prompt length follows the account's tier: **1,500 characters as a Guest, up to 8,000 from Supporter** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
+- Prompt length follows the account's tier: **1,500 characters as a Guest, 8,000 at Supporter, 10,000 at Founder** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
 - Listing rows shorten `prompt` and `description` (ellipsis + `promptTruncated` flag); `get_creation` returns the
   full text — use it to re-read a prompt before replaying it with a variant.
 - Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the
@@ -105,7 +108,7 @@ per shot. Check `get_account` before the shot loop.
 ## 8. Do not
 
 - Probe presets or durations by submitting — read them from `get_account`.
-- Request 6.5 / 7.5 s clips for character shots.
+- Request 6 / 7 s clips for character shots.
 - Generate finals at `ultimate` while iterating; iterate at `max` (images) or `normal` (video tests).
 - Assume $0.03 per image: that is the `fast` preset. Reference tools at `ultra` / `ultimate` cost several times more.
 - Store the API key anywhere but the MCP env; the key is what spends the credit.
