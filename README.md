@@ -147,7 +147,7 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   `promptTruncated` flag; `get_creation` returns the full text, so a prompt can be re-read and replayed.
 - **References are checked at submit.** An unknown `inputCreationId` / `refCreationIds` is refused with
   `CREATION_NOT_FOUND` and the missing ids, before any charge.
-- **Prompts** are capped per account tier (1,500 characters as a Guest, 8,000 at Supporter, 10,000 at Founder): `get_account` reports the exact cap as `promptMaxChars` and the tier that raises it as `promptMaxCharsNext`; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
+- **Prompts** are capped per account tier (1,500 characters as a Guest, 8,000 at Supporter, 20,000 at Founder): `get_account` reports the exact cap as `promptMaxChars` and the tier that raises it as `promptMaxCharsNext`; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
   TIXI enhancement is off by default on `generate_image` (`enhance: true` rewrites a short brief into a full prompt);
   `face-ref` and `character-ref`, wallpaper resize and the artistic-style tool always run it.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`

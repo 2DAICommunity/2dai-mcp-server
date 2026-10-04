@@ -24,7 +24,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Fast quality below Founder, optional aspectRatio; no frameInterpolation. Long Video Next clips render for several minutes: ' +
         'expect a queueId to collect with check_generation. get_account lists the Video Next lengths and qualities open to the account.',
       inputSchema: {
-        prompt: z.string().min(1).max(10000)
+        prompt: z.string().min(1).max(20000)
           .describe('How the scene should move (camera, motion, mood). Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate (the first frame) — from an earlier generation, upload_image or list_creations.'),
