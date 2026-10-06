@@ -88,7 +88,7 @@ want zero install and a single URL.
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
 | `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default) | generate | **yes** |
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Flash with sound via `videoModel: "next"`) | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Flash with sound via `videoModel: "next"`); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
@@ -148,6 +148,11 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   ratio). Lengths and presets depend on the account — at launch `fast` quality and 1, 5, 8 or 10 s, more with later
   releases and higher tiers: `get_account` lists what the account may submit. Long clips render for several minutes:
   expect a `queueId` and collect it with `check_generation`.
+- **Video styles and TIXI.** Every video style except `raw` (and `auto`) runs TIXI on the prompt: the style's
+  guidance only exists through that rewrite, so it cannot be switched off. `style: "raw"` sends the prompt verbatim —
+  pass `enhance: true` to have TIXI write the motion scenario (Video) or the full Gen8 Flash brief (shots, pictures,
+  sound) from a short idea; a prompt starting with `tixi ` adds a thinking pass (the word is dropped from what TIXI
+  reads). No extra credit either way.
 - **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation. `auto` draws the
   preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
   resolved `quality` next to `costUsd`.

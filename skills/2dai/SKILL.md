@@ -47,6 +47,10 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
   a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
   `aspectRatio`. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s at launch, more with later
   releases and higher tiers — read them from `get_account`, never assume. Long clips render for several minutes.
+- **Video styles and TIXI**: every video style except `raw` (and `auto`) runs TIXI on the prompt and cannot switch
+  it off (the style guidance only exists through that rewrite). `style: "raw"` = your prompt verbatim; add
+  `enhance: true` to have TIXI write the motion scenario or the Gen8 Flash brief from a short idea, and start the
+  prompt with `tixi ` for a thinking pass (the word is dropped from what TIXI reads).
 - A video takes 1–3 minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
   pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
   still-waiting job.

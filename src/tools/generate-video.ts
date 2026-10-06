@@ -36,7 +36,8 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
           .describe('Gen8 Flash only: output shape. "auto" (default) keeps the first frame\'s ratio.'),
         duration: z.number().optional().describe('Clip length in seconds. Video: 5 (recommended), 6 or 7 (7 is tier-gated). Gen8 Flash (videoModel next): the lengths get_account lists for this account (1, 5, 8 or 10 at launch). Default 5. On Video, subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
-        style: z.string().optional().describe('Motion style id, or "auto" (default).'),
+        style: z.string().optional().describe('Motion style id, or "auto" (default). Every style except "raw" runs TIXI on the prompt (the style guidance only exists through that rewrite); "raw" sends the prompt verbatim unless enhance is true.'),
+        enhance: z.boolean().optional().describe('Run TIXI on the prompt with style "raw": TIXI writes the motion scenario (Video) or the full Gen8 Flash brief (shots, pictures, sound) from your idea; a prompt starting with "tixi " adds a thinking pass. Every other style already runs TIXI and cannot switch it off. No extra credit.'),
         frameInterpolation: z.boolean().optional().describe('Smoother motion via frame interpolation (costs more).'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block up to the wait budget (default true). Set false to get the queueId immediately.'),
@@ -54,6 +55,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         ...(args.duration !== undefined ? { duration: args.duration } : {}),
         ...(args.quality ? { quality: args.quality } : {}),
         ...(args.style ? { style: args.style } : {}),
+        ...(args.enhance === true ? { enhanced: true } : {}),
         ...(args.frameInterpolation !== undefined ? { frameInterpolation: args.frameInterpolation } : {}),
         ...(args.allowNSFW !== undefined ? { allowNSFW: args.allowNSFW } : {}),
       };
