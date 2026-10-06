@@ -43,10 +43,10 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 - **`ultra` at 5 s** is the recommended shot. `ultimate` only for a final master you will not re-render.
 - **Frame rate** is 18 fps natively. `frameInterpolation: true` doubles it (36 fps) for twice the price — apply it on
   the shots you keep, not on tests.
-- **Video Next** (`generate_video` with `videoModel: "next"`, preview): clips **with sound**, a first frame plus up to
-  6 `refCreationIds` (characters, props, places — each adds a surcharge), 1, 5, 8 (Believer+), 10 (Supporter+),
-  12, 15 or 20 s (Founder), `fast` below Founder, optional `aspectRatio`. Read the open lengths and presets from
-  `get_account`; a 15–20 s clip renders for several minutes.
+- **Gen8 Flash (Preview)** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
+  a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
+  `aspectRatio`. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s at launch, more with later
+  releases and higher tiers — read them from `get_account`, never assume. Long clips render for several minutes.
 - A video takes 1–3 minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
   pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
   still-waiting job.
@@ -57,7 +57,7 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 ## 4. Prompts
 
-- Prompt length follows the account's tier: **1,500 characters as a Guest, 8,000 at Supporter, 10,000 at Founder** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
+- Prompt length follows the account's tier: **1,500 characters as a Guest, 8,000 at Supporter, 20,000 at Founder** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
 - Listing rows shorten `prompt` and `description` (ellipsis + `promptTruncated` flag); `get_creation` returns the
   full text — use it to re-read a prompt before replaying it with a variant.
 - Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the

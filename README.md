@@ -10,6 +10,15 @@ your cloud drive **on your own 2DAI account**.
 - Authenticates with a 2DAI API key (create one at **2dai.io → Dashboard → Integrations → API keys**).
 - Finished images come back as inline previews so the model can see what it made and iterate.
 
+## New — Gen8 Flash (Preview)
+
+`generate_video` with `videoModel: "next"` runs **Gen8 Flash**, the preview of 2DAI's next video engine: clips
+come out **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
+consistent), with an optional `aspectRatio`. At launch every account with video gets `fast` quality and 1, 5, 8 or
+10 s; longer clips and the other presets open with the next releases — `get_account` always lists what the account
+may submit, so read it instead of guessing. In the 2DAI studio the same engine also takes an audio reference (music,
+or a voice to clone) and TIXI writes the full scenario.
+
 ## Quick start
 
 **Claude Code**
@@ -79,7 +88,7 @@ want zero install and a single URL.
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
 | `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default) | generate | **yes** |
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip (Video, or Video Next with sound via `videoModel: "next"`) | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Flash with sound via `videoModel: "next"`) | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
@@ -134,11 +143,11 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   rate to 36 fps for twice the price). Subject
   identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
   shots rather than one long take.
-- **Video Next** (`videoModel: "next"`, preview) renders clips **with sound** from a first frame plus up to 6
-  `refCreationIds` (each adds a surcharge), 1, 5, 8 (Believer+), 10 (Supporter+), 12, 15 or 20 s (Founder), in
-  `fast` below Founder, with an optional `aspectRatio` (`auto` keeps the first frame's ratio). Long clips render for
-  several minutes: expect a `queueId` and collect it with `check_generation`. `get_account` lists the Video Next
-  lengths and presets the account may submit.
+- **Gen8 Flash** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
+  up to 6 `refCreationIds` (each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first frame's
+  ratio). Lengths and presets depend on the account — at launch `fast` quality and 1, 5, 8 or 10 s, more with later
+  releases and higher tiers: `get_account` lists what the account may submit. Long clips render for several minutes:
+  expect a `queueId` and collect it with `check_generation`.
 - **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation. `auto` draws the
   preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
   resolved `quality` next to `costUsd`.

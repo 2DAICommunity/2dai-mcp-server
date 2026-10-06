@@ -55,7 +55,9 @@ export function createServer(config: Config, client: Client): McpServer {
         'generation reply — call get_creation for the caption if the user needs it. Never present a ' +
         'restricted creation as a failure; hand over the viewUrl for review. ' +
         'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
-        'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud. ' +
+        'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud, ' +
+        'plus Gen8 Flash (Preview), the next video engine: clips WITH sound from a first frame and up to 6 references, ' +
+        'via generate_video with videoModel "next" (get_account lists the lengths and presets the account may submit). ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',
     },
   );

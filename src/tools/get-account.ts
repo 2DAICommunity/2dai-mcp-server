@@ -39,14 +39,14 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         if (list.length === 0) return '';
         const allowed = list.filter(q => q.allowed).map(q => q.id + (q.recommended ? ' (recommended)' : ''));
         const locked = list.filter(q => !q.allowed).map(q => q.id);
-        const name = type === 'videoNext' ? 'Video Next' : type;
+        const name = type === 'videoNext' ? 'Gen8 Flash' : type;
         return `${name} presets: ${allowed.length ? allowed.join(', ') : 'none'}` + (locked.length ? ` — locked on this tier: ${locked.join(', ')}` : '') + '. ';
       };
       const nextAvailable = !!me.modelChannels?.video?.next && (me.videoDurationsNext?.length ?? 0) > 0;
       const nextLine = (() => {
         if (!nextAvailable) return '';
         const list = me.videoDurationsNext ?? [];
-        return 'Video Next (videoModel "next", with sound) durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
+        return 'Gen8 Flash (videoModel "next", with sound) durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
           (me.defaultVideoDurationNext ? `; default ${me.defaultVideoDurationNext}s. ` : '. ') + presetLine('videoNext');
       })();
       const durationLine = (() => {
@@ -61,7 +61,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         presetLine('image') + presetLine('video') + durationLine + nextLine +
         (me.canUseVideo === false ? 'Video is not available on this tier (it opens at Holder). ' : '') +
         `Prompts up to ${me.promptMaxChars ?? 3000} characters on this account${me.promptMaxCharsNext ? ` (${me.promptMaxCharsNext.tier} raises it to ${me.promptMaxCharsNext.max})` : ''}. ` +
-        `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud.`,
+        `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud${nextAvailable ? ' — and Gen8 Flash (Preview), the next video engine with sound, via generate_video videoModel "next"' : ''}.`,
         {
           userId: me.userId,
           username: me.username,
