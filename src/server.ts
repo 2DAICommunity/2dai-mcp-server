@@ -13,6 +13,7 @@ import { registerListArtisticStyles } from './tools/list-artistic-styles.js';
 import { registerCheckGeneration } from './tools/check-generation.js';
 import { registerCancelGeneration } from './tools/cancel-generation.js';
 import { registerUploadImage } from './tools/upload-image.js';
+import { registerUploadAudio } from './tools/upload-audio.js';
 import { registerDownloadCreation } from './tools/download-creation.js';
 import { registerGetCreation } from './tools/get-creation.js';
 import { registerListCreations } from './tools/list-creations.js';
@@ -56,7 +57,7 @@ export function createServer(config: Config, client: Client): McpServer {
         'restricted creation as a failure; hand over the viewUrl for review. ' +
         'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
         'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud, ' +
-        'plus Gen8 Flash (Preview), the next video engine: clips WITH sound from a first frame and up to 6 references, ' +
+        'plus Gen8 Flash (Preview), the next video engine: clips WITH sound from a first frame, up to 6 references and an optional audio reference (an MP3 from upload_audio, as music or a voice sample), ' +
         'via generate_video with videoModel "next" (get_account lists the lengths and presets the account may submit). ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',
     },
@@ -74,6 +75,7 @@ export function createServer(config: Config, client: Client): McpServer {
   registerCheckGeneration(server, ctx);
   registerCancelGeneration(server, ctx);
   registerUploadImage(server, ctx);
+  registerUploadAudio(server, ctx);
   registerDownloadCreation(server, ctx);
   registerGetCreation(server, ctx);
   registerListCreations(server, ctx);

@@ -20,7 +20,9 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'Price = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
         'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
         'videoModel "next" = Gen8 Flash, the new video engine: clips WITH sound, from the first frame plus up to 6 refCreationIds ' +
-        '(characters, props, places — each adds a surcharge), optional aspectRatio; no frameInterpolation. Lengths and quality presets ' +
+        '(characters, props, places — each adds a surcharge), optional aspectRatio, and an optional AUDIO REFERENCE: an MP3 uploaded with ' +
+        'upload_audio as audioCreationId, used as music (soundtrack / sound design) or as a voice sample (audioUse) — it counts as one more reference. ' +
+        'No frameInterpolation. Lengths and quality presets ' +
         'depend on the account: at launch Fast quality and 1, 5, 8 or 10 seconds, more with later releases and higher tiers — ' +
         'get_account lists what this account may submit, never guess. Long clips render for several minutes: expect a queueId to collect with check_generation.',
       inputSchema: {
@@ -34,6 +36,10 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
           .describe('Gen8 Flash only: up to 6 more reference creations after the first frame (characters, props, places). Each adds a surcharge.'),
         aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16']).optional()
           .describe('Gen8 Flash only: output shape. "auto" (default) keeps the first frame\'s ratio.'),
+        audioCreationId: z.string().length(32).optional()
+          .describe('Gen8 Flash only: an audio creation from upload_audio (an MP3 of the account) used as the clip\'s audio reference; counts as one more reference for the price. Rejected on the default model (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).'),
+        audioUse: z.enum(['music', 'voice']).optional()
+          .describe('How the audio reference is used: "music" = soundtrack / sound design (default), "voice" = a voice sample the speaking character follows.'),
         duration: z.number().optional().describe('Clip length in seconds. Video: 5 (recommended), 6 or 7 (7 is tier-gated). Gen8 Flash (videoModel next): the lengths get_account lists for this account (1, 5, 8 or 10 at launch). Default 5. On Video, subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
         style: z.string().optional().describe('Motion style id, or "auto" (default). Every style except "raw" runs TIXI on the prompt (the style guidance only exists through that rewrite); "raw" sends the prompt verbatim unless enhance is true.'),
@@ -52,6 +58,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         ...(args.videoModel ? { videoModel: args.videoModel } : {}),
         ...(args.videoModel === 'next' && args.refCreationIds?.length ? { refCreationIds: args.refCreationIds } : {}),
         ...(args.videoModel === 'next' && args.aspectRatio ? { aspectRatio: args.aspectRatio } : {}),
+        ...(args.videoModel === 'next' && args.audioCreationId ? { audioCreationId: args.audioCreationId, audioUse: args.audioUse ?? 'music' } : {}),
         ...(args.duration !== undefined ? { duration: args.duration } : {}),
         ...(args.quality ? { quality: args.quality } : {}),
         ...(args.style ? { style: args.style } : {}),

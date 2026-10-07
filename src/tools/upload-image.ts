@@ -14,7 +14,7 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         'moderation pass — NSFW beyond the account\'s ceiling is rejected. Max 100 MB (Founder tier) — ' +
         'lower tiers cap earlier, the server returns 413 with the account\'s actual max on excess. jpeg/png/webp. ' +
         'Paths must stay inside the working directory unless the server was started with ' +
-        'TWODAI_ALLOW_ANY_PATH=1.',
+        'TWODAI_ALLOW_ANY_PATH=1. An MP3 for a Gen8 Flash audio reference goes through upload_audio instead.',
       inputSchema: {
         path: z.string().optional().describe('Path to the image file, relative to the working directory.'),
         base64: z.string().optional().describe('Raw base64 image bytes — alternative to path.'),

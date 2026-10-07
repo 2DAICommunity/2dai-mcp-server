@@ -45,7 +45,9 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
   the shots you keep, not on tests.
 - **Gen8 Flash (Preview)** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
   a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
-  `aspectRatio`. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s at launch, more with later
+  `aspectRatio`, and an optional audio reference: `upload_audio` an MP3 (5 min max, Holder+) and pass it as
+  `audioCreationId` with `audioUse: "music"` (soundtrack / sound design) or `"voice"` (a voice sample the speaking
+  character follows) — it counts as one more reference. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s at launch, more with later
   releases and higher tiers — read them from `get_account`, never assume. Long clips render for several minutes.
 - **Video styles and TIXI**: every video style except `raw` (and `auto`) runs TIXI on the prompt and cannot switch
   it off (the style guidance only exists through that rewrite). `style: "raw"` = your prompt verbatim; add
@@ -57,7 +59,8 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 - **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with `frameInterpolation`. `auto`
   draws the preset, so two "identical" calls can cost differently — pin the preset; every submit returns the
   resolved `quality` next to `costUsd`.
-- The input is a still creation: an earlier generation, an `upload_image`, or a row from `list_creations`.
+- The input is a still creation: an earlier generation, an `upload_image`, or a row from `list_creations`; an
+  audio reference is an `upload_audio` row (`mediaKind: "audio"` in listings).
 
 ## 4. Prompts
 

@@ -16,8 +16,9 @@ your cloud drive **on your own 2DAI account**.
 come out **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
 consistent), with an optional `aspectRatio`. At launch every account with video gets `fast` quality and 1, 5, 8 or
 10 s; longer clips and the other presets open with the next releases — `get_account` always lists what the account
-may submit, so read it instead of guessing. In the 2DAI studio the same engine also takes an audio reference (music,
-or a voice to clone) and TIXI writes the full scenario.
+may submit, so read it instead of guessing. Since 1.6.0 the clip can follow an **audio reference** too: `upload_audio`
+an MP3, then pass its id as `audioCreationId` (`audioUse: "music"` for a soundtrack, `"voice"` for a voice sample) —
+and TIXI writes the full scenario around it.
 
 ## Quick start
 
@@ -88,13 +89,14 @@ want zero install and a single URL.
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
 | `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default) | generate | **yes** |
 | `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Flash with sound via `videoModel: "next"`); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Flash with sound via `videoModel: "next"`, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
 | `upload_image` | Upload a local image / base64 as a reference | generate | no |
+| `upload_audio` | Upload a local MP3 / base64 as the audio reference of a Gen8 Flash clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
 | `download_creation` | Save the full-resolution asset to disk, or return an inline preview | read | no |
 | `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
 | `list_creations` | Page, search, sort and filter the library (folders, folder groups, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
@@ -145,7 +147,9 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   shots rather than one long take.
 - **Gen8 Flash** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
   up to 6 `refCreationIds` (each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first frame's
-  ratio). Lengths and presets depend on the account — at launch `fast` quality and 1, 5, 8 or 10 s, more with later
+  ratio) and an optional audio reference — an MP3 from `upload_audio` as `audioCreationId`, `audioUse: "music"`
+  (soundtrack / sound design) or `"voice"` (a voice sample the speaking character follows); it counts as one more
+  reference. Lengths and presets depend on the account — at launch `fast` quality and 1, 5, 8 or 10 s, more with later
   releases and higher tiers: `get_account` lists what the account may submit. Long clips render for several minutes:
   expect a `queueId` and collect it with `check_generation`.
 - **Video styles and TIXI.** Every video style except `raw` (and `auto`) runs TIXI on the prompt: the style's

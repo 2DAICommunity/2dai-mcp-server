@@ -47,7 +47,8 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         if (!nextAvailable) return '';
         const list = me.videoDurationsNext ?? [];
         return 'Gen8 Flash (videoModel "next", with sound) durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
-          (me.defaultVideoDurationNext ? `; default ${me.defaultVideoDurationNext}s. ` : '. ') + presetLine('videoNext');
+          (me.defaultVideoDurationNext ? `; default ${me.defaultVideoDurationNext}s. ` : '. ') + presetLine('videoNext') +
+          'An MP3 uploaded with upload_audio can be its audio reference (audioCreationId + audioUse "music" / "voice"). ';
       })();
       const durationLine = (() => {
         const list = me.videoDurations ?? [];

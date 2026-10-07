@@ -82,6 +82,16 @@ export function describeError(err: unknown): string {
     if (err.code === 'CREATION_IN_TRASH') {
       return 'This creation is in the trash — restore it before publishing.';
     }
+    if (err.code === 'INVALID_AUDIO_REF') {
+      return 'INVALID_AUDIO_REF: audioCreationId must be an audio creation of this account — an MP3 stored with upload_audio, not an image or a clip. Nothing was charged.';
+    }
+    if (err.code === 'AUDIO_REF_NEXT_ONLY') {
+      return 'AUDIO_REF_NEXT_ONLY: an audio reference only works on Gen8 Flash — set videoModel "next". Nothing was charged.';
+    }
+    if (err.code === 'AUDIO_TOO_LONG') {
+      const max = (err as any).details?.maxSeconds;
+      return `AUDIO_TOO_LONG: the audio file is longer than this platform accepts${typeof max === 'number' ? ` (${max} s max)` : ''}. Trim it and upload again.`;
+    }
     if (err.code === 'FILE_TOO_LARGE') {
       // Preserve the crisp "your file was X, cap is Y" message the local
       // pre-check used to emit before the cap was bumped to 100 MB (the

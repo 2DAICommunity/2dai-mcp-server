@@ -46,6 +46,10 @@ export function slimRow(c: Creation): Record<string, unknown> {
     source: c.source,
     width: c.width,
     height: c.height,
+    // Images are the norm — only a video clip or an audio upload names its kind.
+    mediaKind: c.mediaKind && c.mediaKind !== 'image' ? c.mediaKind : undefined,
+    duration: typeof c.duration === 'number' ? c.duration : undefined,
+    hasAudio: c.hasAudio || undefined,
     isUploaded: c.isUploaded || undefined,
     creationDate: c.creationDate,
     folderId: c.folderId ?? undefined,
