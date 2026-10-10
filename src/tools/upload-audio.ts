@@ -4,6 +4,7 @@ import { guard, ok, viewUrlFor } from '../result.js';
 import { resolveReadPath } from '../paths.js';
 
 export const registerUploadAudio: RegisterTool = (server, ctx) => {
+  const hasFs = ctx.config.fileAccess !== 'none';
   server.registerTool(
     'upload_audio',
     {
@@ -13,10 +14,14 @@ export const registerUploadAudio: RegisterTool = (server, ctx) => {
         'Gen8 Flash clip: pass the returned creationId as audioCreationId to generate_video with videoModel "next", ' +
         'with audioUse "music" (soundtrack / sound design) or "voice" (a voice sample the speaking character follows). ' +
         'MP3 only, 5 minutes max (400 AUDIO_TOO_LONG), Holder tier and up (403 AUDIO_NOT_ALLOWED). Free; no vision ' +
-        'caption — the file name and length label it in the drive. Paths must stay inside the working directory ' +
-        'unless the server was started with TWODAI_ALLOW_ANY_PATH=1.',
+        'caption — the file name and length label it in the drive. ' +
+        (hasFs
+          ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any.'
+          : 'This server has no filesystem: send the bytes as base64, a path is refused.'),
       inputSchema: {
-        path: z.string().optional().describe('Path to the .mp3 file, relative to the working directory.'),
+        path: z.string().optional().describe(hasFs
+          ? 'Path to the .mp3 file, relative to the working directory.'
+          : 'Not available on this server (no filesystem) — send base64 instead.'),
         base64: z.string().optional().describe('Raw base64 MP3 bytes — alternative to path.'),
         filename: z.string().max(120).optional().describe('Filename to store (defaults to the source name; it labels the audio in the drive).'),
         targetFolderId: z.string().optional().describe('File the upload directly into this folder (must be a folder you can write to); omit to land at the drive root.'),
@@ -25,7 +30,7 @@ export const registerUploadAudio: RegisterTool = (server, ctx) => {
     },
     async (args, extra) => guard(async () => {
       if (!args.path && !args.base64) {
-        throw new Error('Provide either "path" or "base64".');
+        throw new Error(hasFs ? 'Provide either "path" or "base64".' : 'Provide "base64" (this server has no filesystem).');
       }
       const extras = {
         contentType: 'audio/mpeg',

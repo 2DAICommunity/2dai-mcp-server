@@ -1,6 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Creation, QueueState, QueueTicket } from '2dai-cloud-sdk';
 import type { RequestContext } from './context.js';
+import type { Config } from './config.js';
 import { describeError } from './errors.js';
 
 /** NSFW tier threshold at which the vision-derived description is dropped
@@ -69,6 +70,19 @@ export async function previewBlock(
     return undefined;
   }
 }
+
+/** Machine link to the full asset — the API's CDN proxy on the PUBLIC origin.
+ *  Private creations need the same `Authorization: Bearer <api key>` header the
+ *  caller already sends to this server; public ones need nothing. Handed out
+ *  only when the server has no filesystem of the caller's (hosted transport):
+ *  everywhere else `savePath` writes the file where the user can reach it. */
+export function downloadUrlFor(config: Config, cdnId: string, watermark: boolean): string {
+  return `${config.publicApiBase}/cdn/file/${encodeURIComponent(cdnId)}${watermark ? '?watermark=1' : ''}`;
+}
+
+export const DOWNLOAD_AUTH_NOTE =
+  'GET it with the same "Authorization: Bearer <2DAI API key>" header this server uses ' +
+  '(public creations need no header); the content-type tells the extension.';
 
 /** Human-shareable link: opens the creation in the owner's 2DAI cloud drive
  *  (login prompt if needed). This is the ONLY link that works in a browser —

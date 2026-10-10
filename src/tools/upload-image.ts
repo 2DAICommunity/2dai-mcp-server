@@ -4,6 +4,7 @@ import { guard, ok, viewUrlFor } from '../result.js';
 import { resolveReadPath } from '../paths.js';
 
 export const registerUploadImage: RegisterTool = (server, ctx) => {
+  const hasFs = ctx.config.fileAccess !== 'none';
   server.registerTool(
     'upload_image',
     {
@@ -13,10 +14,14 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         'reference for generation ("use THIS image"). Free, but the file goes through the platform\'s ' +
         'moderation pass — NSFW beyond the account\'s ceiling is rejected. Max 100 MB (Founder tier) — ' +
         'lower tiers cap earlier, the server returns 413 with the account\'s actual max on excess. jpeg/png/webp. ' +
-        'Paths must stay inside the working directory unless the server was started with ' +
-        'TWODAI_ALLOW_ANY_PATH=1. An MP3 for a Gen8 Flash audio reference goes through upload_audio instead.',
+        (hasFs
+          ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any. '
+          : 'This server has no filesystem: send the bytes as base64, a path is refused. ') +
+        'An MP3 for a Gen8 Flash audio reference goes through upload_audio instead.',
       inputSchema: {
-        path: z.string().optional().describe('Path to the image file, relative to the working directory.'),
+        path: z.string().optional().describe(hasFs
+          ? 'Path to the image file, relative to the working directory.'
+          : 'Not available on this server (no filesystem) — send base64 instead.'),
         base64: z.string().optional().describe('Raw base64 image bytes — alternative to path.'),
         filename: z.string().max(120).optional().describe('Filename to store (defaults to the source name).'),
         contentType: z.string().optional().describe('MIME type when sending base64 (e.g. image/png).'),
@@ -28,7 +33,7 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
     },
     async (args, extra) => guard(async () => {
       if (!args.path && !args.base64) {
-        throw new Error('Provide either "path" or "base64".');
+        throw new Error(hasFs ? 'Provide either "path" or "base64".' : 'Provide "base64" (this server has no filesystem).');
       }
       if (args.croppedFromCreationId && args.erasedFromCreationId) {
         throw new Error('croppedFromCreationId and erasedFromCreationId are mutually exclusive.');

@@ -6,9 +6,11 @@ import type { Config } from './config.js';
  *  prompt-injected instruction must not be able to exfiltrate ~/.ssh/id_rsa
  *  through upload_image, nor scribble outside the project through
  *  download_creation — so paths resolve against the CWD and must stay inside
- *  it unless TWODAI_ALLOW_ANY_PATH=1. Symlinks are resolved (realpath) BEFORE
+ *  it unless TWODAI_FILE_ACCESS=any. Symlinks are resolved (realpath) BEFORE
  *  the boundary check, so a link pointing out of the sandbox fails the same
- *  way a ../ traversal does. */
+ *  way a ../ traversal does. With TWODAI_FILE_ACCESS=none (the hosted
+ *  transport's default) there is no filesystem for the caller at all: the
+ *  disk would be the server's own container. */
 
 export class PathBoundaryError extends Error {}
 
@@ -24,15 +26,25 @@ async function assertInsideCwd(realPath: string, kind: 'read' | 'write'): Promis
   if (realPath !== cwd && !realPath.startsWith(cwd + sep)) {
     throw new PathBoundaryError(
       `Refusing to ${kind} outside the working directory (${cwd}). ` +
-      `Set TWODAI_ALLOW_ANY_PATH=1 in the server env to allow it.`,
+      `Set TWODAI_FILE_ACCESS=any in the server env to allow it.`,
     );
   }
+}
+
+function assertFileAccess(config: Config, kind: 'read' | 'write'): void {
+  if (config.fileAccess !== 'none') return;
+  throw new PathBoundaryError(
+    kind === 'read'
+      ? 'This server runs without filesystem access (hosted mode): send the file as "base64" instead of a "path".'
+      : 'This server runs without filesystem access (hosted mode): omit "savePath" — the reply carries an inline preview and a "downloadUrl" to fetch the full file yourself.',
+  );
 }
 
 /** Validate a file the agent wants to READ (upload source). Returns the
  *  resolved real path. Enforces existence, the CWD boundary and the upload
  *  size cap before a single byte is read. */
 export async function resolveReadPath(userPath: string, config: Config): Promise<string> {
+  assertFileAccess(config, 'read');
   const abs = isAbsolute(userPath) ? userPath : resolve(process.cwd(), userPath);
   let real: string;
   try {
@@ -47,7 +59,7 @@ export async function resolveReadPath(userPath: string, config: Config): Promise
       `File is ${(info.size / 1024 / 1024).toFixed(1)} MB — the upload cap is 100 MB (Founder tier); lower tiers cap earlier.`,
     );
   }
-  if (!config.allowAnyPath) await assertInsideCwd(real, 'read');
+  if (config.fileAccess === 'cwd') await assertInsideCwd(real, 'read');
   return real;
 }
 
@@ -55,6 +67,7 @@ export async function resolveReadPath(userPath: string, config: Config): Promise
  *  not exist yet, so the boundary check runs on the nearest EXISTING ancestor
  *  directory's real path; missing directories inside the sandbox are created. */
 export async function resolveWritePath(userPath: string, config: Config): Promise<string> {
+  assertFileAccess(config, 'write');
   const abs = isAbsolute(userPath) ? userPath : resolve(process.cwd(), userPath);
   const dir = dirname(abs);
   let existing = dir;
@@ -71,7 +84,7 @@ export async function resolveWritePath(userPath: string, config: Config): Promis
   const realExisting = await realpath(existing);
   const tail = abs.slice(existing.length);
   const realTarget = realExisting + tail;
-  if (!config.allowAnyPath) await assertInsideCwd(realTarget, 'write');
+  if (config.fileAccess === 'cwd') await assertInsideCwd(realTarget, 'write');
   await mkdir(dirname(realTarget), { recursive: true });
   return realTarget;
 }

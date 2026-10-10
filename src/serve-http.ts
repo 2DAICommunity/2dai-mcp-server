@@ -31,7 +31,7 @@ async function handle(req: IncomingMessage, res: ServerResponse, hosted: HostedC
   // Health probe for compose healthcheck and any front-facing load balancer.
   // Deliberately unauthenticated: the endpoint is a liveness ping, nothing more.
   if (method === 'GET' && (path === '/health' || path === '/healthz')) {
-    writeJson(res, 200, { ok: true, name: '2dai-mcp-server', version: VERSION });
+    writeJson(res, 200, { ok: true, name: '2dai-mcp-server', version: VERSION, fileAccess: hosted.fileAccess });
     return;
   }
 

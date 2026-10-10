@@ -78,9 +78,17 @@ claude mcp add --transport http 2dai https://mcp.2dai.io:800/mcp \
 ```
 
 Both transports (stdio via `npx` and hosted via HTTP) expose the exact same
-tools and the exact same behavior. Pick whichever fits: `npx` when you want
-zero third-party dependency and full control of the process, hosted when you
-want zero install and a single URL.
+tools. Pick whichever fits: `npx` when you want zero third-party dependency and
+full control of the process, hosted when you want zero install and a single URL.
+
+**No filesystem on the hosted server.** The process runs in our container, so a
+`savePath` would write to *our* disk and an upload `path` would read from it —
+both are refused with a clear message (`TWODAI_FILE_ACCESS=none` is the hosted
+default). Instead, `download_creation` returns an inline preview (images) plus
+`downloadUrl`, the full-resolution file on the API: GET it with the same
+`Authorization: Bearer` header you send to the server (public creations need
+none). `upload_image` / `upload_audio` take `base64`. `GET /health` reports
+`fileAccess: "none"`.
 
 ## Tools
 
@@ -95,9 +103,9 @@ want zero install and a single URL.
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
-| `upload_image` | Upload a local image / base64 as a reference | generate | no |
+| `upload_image` | Upload a local image / base64 as a reference (hosted: base64 only) | generate | no |
 | `upload_audio` | Upload a local MP3 / base64 as the audio reference of a Gen8 Flash clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
-| `download_creation` | Save the full-resolution asset to disk, or return an inline preview | read | no |
+| `download_creation` | Save the full-resolution asset to disk, or return an inline preview (hosted: inline preview + `downloadUrl`) | read | no |
 | `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
 | `list_creations` | Page, search, sort and filter the library (folders, folder groups, trash, activity lenses, smart collections, shared folders, random pick). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
 | `browse_feed` | Page through the public feed (other creators' published work) | read | no |
@@ -132,8 +140,9 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 | `TWODAI_PREVIEW_MAX_SIDE` | `512` | Longest edge of those previews, in px |
 | `TWODAI_WAIT_BUDGET_MS` | `45000` | How long a generation call blocks before degrading to a queueId |
 | `TWODAI_IDEMPOTENCY_WINDOW_MS` | `30000` | Window in which an identical re-submit is treated as a retry, not a new charge |
-| `TWODAI_ALLOW_ANY_PATH` | `0` | Allow file reads/writes outside the working directory |
+| `TWODAI_FILE_ACCESS` | `cwd` | What `path` / `savePath` may touch: `cwd` (confined to the working directory), `any` (no boundary), `none` (no filesystem — the hosted default; `any` is refused there). `TWODAI_ALLOW_ANY_PATH=1` still means `any` |
 | `TWODAI_API_BASE` | production API | API origin override (for self-hosted testing) |
+| `TWODAI_PUBLIC_API_BASE` | production API | Origin `downloadUrl` is built on (hosted / `none` mode) — the API address the caller can reach, not a private one |
 
 ## Notes for agents
 

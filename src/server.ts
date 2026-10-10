@@ -36,6 +36,11 @@ import { registerGetTokenPrice } from './tools/get-token-price.js';
  *  every request builds its own client from the header key and its own
  *  server, and both are torn down when the response closes. */
 export function createServer(config: Config, client: Client): McpServer {
+  const bytesSentence = config.fileAccess === 'none'
+    ? 'To hand the user the actual file bytes, call download_creation WITHOUT savePath: this server has no ' +
+      'filesystem of yours, so the reply carries `downloadUrl` (GET it with the same Authorization: Bearer ' +
+      'key you send here) plus an inline preview for images; uploads take base64, never a path. '
+    : 'To hand the user the actual file bytes, call download_creation with a savePath. ';
   const server = new McpServer(
     { name: '2dai-mcp-server', version: VERSION },
     {
@@ -46,8 +51,8 @@ export function createServer(config: Config, client: Client): McpServer {
         'Long generations return a queueId; collect them with check_generation rather than re-submitting, ' +
         'which would be charged again. The stats, feed and wallet tools are read-only and never spend. ' +
         'LINKS: the only shareable link is `viewUrl` — it opens the creation in the owner\'s 2DAI cloud ' +
-        'drive (login prompt if needed). To hand the user the actual file bytes, call download_creation ' +
-        'with a savePath. Every generation reply also carries an inline preview image so you can see ' +
+        'drive (login prompt if needed). ' + bytesSentence +
+        'Every generation reply also carries an inline preview image so you can see ' +
         'what came out without an extra call. ' +
         'CONTENT: generation replies include `nsfwLabel` (SFW / Suggestive / Near-nude / Adult NSFW / ' +
         'Prohibited) and `nsfwRate` (0..1). From Near-nude (rate ≥ 0.8) the reply also carries ' +
