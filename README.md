@@ -164,7 +164,7 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   shots rather than one long take.
 - **Gen8 Preview images** (`generate_image` with `imageModel: "next"`, the new image engine) keep up to 6 `refCreationIds`
   natively (3 on the default model), renders legible text and honours long literal prompts — describe the scene
-  plainly rather than in keyword lists. Same quality ids, a little pricier per preset, and every reference adds a
+  plainly rather than in keyword lists. Same quality ids, priced on render time at roughly 3× the Gen 7.2 preset, and every reference adds a
   surcharge on both models. Holder and up: `get_account` reports `canUseImageNext` and `qualities.imageNext`; a
   submit below the gate is refused with the tier that opens it, uncharged. The other image tools stay on Gen 7.2.
 - **Gen8 Preview video** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
