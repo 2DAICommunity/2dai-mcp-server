@@ -32,7 +32,12 @@ export function describeError(err: unknown): string {
     return 'Blocked by content moderation. Rephrase the prompt, or enable NSFW on the account if the request is legitimate.';
   }
   if (err instanceof TierError) {
-    return `Your tier does not include this option${err.message ? ` (${err.message})` : ''}. See Dashboard → Tiers.`;
+    // The server names the first tier that opens the option and writes the sentence; nothing was charged.
+    const tool = err.tool;
+    const fallback = tool === 'image-next' ? ' Use generate_image without imageModel "next" (Gen 7.2, up to 3 references) meanwhile.'
+      : tool === 'video-next' ? ' Use generate_video without videoModel "next" meanwhile.' : '';
+    const opens = err.requiredTierName ? ` It opens at ${err.requiredTierName}.` : '';
+    return `Your tier does not include this option${err.message ? ` — ${err.message}` : '.'}${err.message?.includes('opens at') ? '' : opens}${fallback} See Dashboard → Tiers.`;
   }
   if (err instanceof QueueLimitError) {
     return 'Too many generations already running on this account. Wait for one to finish, or poll with check_generation.';
@@ -41,6 +46,10 @@ export function describeError(err: unknown): string {
     return 'Rate limited. Wait a few seconds before retrying.';
   }
   if (err instanceof NotFoundError) {
+    const missing = (err as any).details?.missingCreationIds;
+    if (Array.isArray(missing) && missing.length > 0) {
+      return `CREATION_NOT_FOUND: reference${missing.length > 1 ? 's' : ''} ${missing.join(', ')} cannot be used — unknown, in the trash, deleted, or not visible to this account. Nothing was charged; restore the creation (organise_creation "restore") or drop it from the references.`;
+    }
     return 'Not found — the creation, folder or queue id does not exist on this account (or was deleted).';
   }
   if (err instanceof GenerationFailedError) {
@@ -85,8 +94,15 @@ export function describeError(err: unknown): string {
     if (err.code === 'INVALID_AUDIO_REF') {
       return 'INVALID_AUDIO_REF: audioCreationId must be an audio creation of this account — an MP3 stored with upload_audio, not an image or a clip. Nothing was charged.';
     }
+    if (err.code === 'IMAGE_MODEL_UNAVAILABLE' || err.code === 'VIDEO_MODEL_UNAVAILABLE') {
+      return `${err.code}: that model channel is not available on this server right now. Nothing was charged — submit on the default model.`;
+    }
+    if (err.code === 'TOO_MANY_REFS') {
+      const d = (err as any).details ?? {};
+      return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references (got ${d.got ?? '?'}). Nothing was charged. generate_image takes 3 on the default model and 6 with imageModel "next" (Holder and up).`;
+    }
     if (err.code === 'AUDIO_REF_NEXT_ONLY') {
-      return 'AUDIO_REF_NEXT_ONLY: an audio reference only works on Gen8 Flash — set videoModel "next". Nothing was charged.';
+      return 'AUDIO_REF_NEXT_ONLY: an audio reference only works on Gen8 Preview video — set videoModel "next". Nothing was charged.';
     }
     if (err.code === 'AUDIO_TOO_LONG') {
       const max = (err as any).details?.maxSeconds;
@@ -109,6 +125,10 @@ export function describeError(err: unknown): string {
       return 'Upload rejected — file exceeds this account\'s size cap.';
     }
     return `Invalid request${err.message ? `: ${err.message}` : ''}.`;
+  }
+  if (err instanceof ApiError && err.code === 'KEY_POLICY_CHANNEL') {
+    const ch = (err as any).details?.channel;
+    return `KEY_POLICY_CHANNEL: this API key's policy does not reach the "${ch ?? 'next'}" model channel (see get_account → key.modelChannels). Nothing was charged — submit on the default model, or use a key without a channel policy.`;
   }
   if (err instanceof ApiError) {
     return `2DAI API error${err.code ? ` [${err.code}]` : ''}${err.message ? `: ${err.message}` : ''}.`;

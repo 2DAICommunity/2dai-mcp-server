@@ -11,7 +11,7 @@ export const registerUploadAudio: RegisterTool = (server, ctx) => {
       title: 'Upload an audio file',
       description:
         'Upload a local MP3 (or base64 bytes) to the 2DAI cloud drive so it can be the AUDIO REFERENCE of a ' +
-        'Gen8 Flash clip: pass the returned creationId as audioCreationId to generate_video with videoModel "next", ' +
+        'Gen8 Preview video clip: pass the returned creationId as audioCreationId to generate_video with videoModel "next", ' +
         'with audioUse "music" (soundtrack / sound design) or "voice" (a voice sample the speaking character follows). ' +
         'MP3 only, 5 minutes max (400 AUDIO_TOO_LONG), Holder tier and up (403 AUDIO_NOT_ALLOWED). Free; no vision ' +
         'caption — the file name and length label it in the drive. ' +

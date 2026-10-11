@@ -135,8 +135,11 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
     viewUrl: viewUrlFor(state.creationId),
     costUsd: state.costUsd,
     ...(quality ? { quality } : {}),
+    ...(channelOf(state.videoModel, creation?.videoModel, 'videoModel')),
+    ...(channelOf(state.imageModel, creation?.imageModel, 'imageModel')),
     ...(durationSeconds !== undefined ? { durationSeconds } : {}),
     ...(fps !== undefined ? { fps } : {}),
+    ...(state.startedAt ? { startedAt: state.startedAt } : {}),
     completedAt: state.completedAt,
     ...(creation?.width !== undefined ? { width: creation.width } : {}),
     ...(creation?.height !== undefined ? { height: creation.height } : {}),
@@ -147,6 +150,12 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
     ...(creation?.description && !descriptionHidden ? { description: creation.description } : {}),
     ...(descriptionHidden ? { descriptionHidden: true } : {}),
   };
+}
+
+/** The model channel a job ran on (`next` = Gen8), from the queue state or the hydrated row — only when one is known. */
+function channelOf(fromState: string | undefined, fromCreation: string | undefined, key: 'videoModel' | 'imageModel'): Record<string, string> {
+  const v = fromState ?? fromCreation;
+  return v === 'default' || v === 'next' ? { [key]: v } : {};
 }
 
 /** A creation the platform keeps but restricts: flagged by the content rating

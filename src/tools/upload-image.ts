@@ -17,7 +17,7 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         (hasFs
           ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any. '
           : 'This server has no filesystem: send the bytes as base64, a path is refused. ') +
-        'An MP3 for a Gen8 Flash audio reference goes through upload_audio instead.',
+        'An MP3 for a Gen8 Preview video audio reference goes through upload_audio instead.',
       inputSchema: {
         path: z.string().optional().describe(hasFs
           ? 'Path to the image file, relative to the working directory.'

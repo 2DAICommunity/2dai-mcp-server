@@ -16,14 +16,21 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         'Returns the finished creation when it lands within the wait budget, otherwise a queueId to poll ' +
         'with check_generation. Style and quality default to "auto" (the server picks by tier). ' +
         'Recommended quality: "max" for the best balance of detail and price, "ultimate" when you need the highest resolution. ' +
-        'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier), so pin the ' +
-        'preset for a predictable cost. The response carries the resolved quality and costUsd.',
+        'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier; high or max on imageModel "next"), so pin the ' +
+        'preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
+        'imageModel "next" = Gen8 Preview images, the new image engine: up to 6 refCreationIds kept natively (3 on the default model), ' +
+        'legible text in the picture, long literal prompts honoured, the same quality ids at a slightly higher price; every reference adds a surcharge on both models. ' +
+        'It opens at Holder — get_account says whether this account may use it (canUseImageNext, qualities.imageNext), never probe by submitting.',
       inputSchema: {
         prompt: z.string().min(1).max(20000).describe('What to generate. Be specific; this drives the whole image. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
+        imageModel: z.enum(['default', 'next']).optional()
+          .describe('"default" (Gen 7.2, up to 3 references) or "next" (Gen8 Preview images: up to 6 references, legible text, long literal prompts; Holder and up — see get_account canUseImageNext). Default "default".'),
+        refCreationIds: z.array(z.string().length(32)).max(6).optional()
+          .describe('Reference creations the image should follow (characters, products, places): up to 3 on the default model, up to 6 with imageModel "next". Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
-        negativePrompt: z.string().max(20000).optional().describe('What to avoid in the image. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
+        negativePrompt: z.string().max(20000).optional().describe('What to avoid in the image. Optional — not every engine applies it (Gen8 Preview images currently ignore it). Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         enhance: z.boolean().optional().describe(
           'Run TIXI, the 2DAI prompt enhancer, before generating (default false). TIXI rewrites a short brief into a full ' +
@@ -39,6 +46,8 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
       const rc = { ...ctx, signal: extra.signal };
       const params = {
         prompt: args.prompt,
+        ...(args.imageModel ? { imageModel: args.imageModel } : {}),
+        ...(args.refCreationIds?.length ? { refCreationIds: args.refCreationIds } : {}),
         ...(args.aspectRatio ? { aspectRatio: args.aspectRatio } : {}),
         ...(args.quality ? { quality: args.quality } : {}),
         ...(args.style ? { style: args.style } : {}),

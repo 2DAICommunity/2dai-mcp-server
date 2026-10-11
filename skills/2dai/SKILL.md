@@ -33,6 +33,12 @@ never `ultimate` (that preset needs dedicated render capacity that is not always
 preset once you know what the shot is for. Reference tools (`face-ref`, `character-ref`, `style-transfer`, `smart-edit`) run on the same
 ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
+**Gen8 Preview images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
+(a little pricier per preset; `auto` picks `high` or `max`): up to **6** `refCreationIds` kept natively (3 on the
+default model), legible text in the picture, long literal prompts honoured — write the scene plainly, not as keyword
+lists. Every reference adds a surcharge on both image models. Holder and up: `get_account` reports `canUseImageNext`
+and `qualities.imageNext`; below the gate stay on the default model, never probe.
+
 ## 3. Video — the rules that matter
 
 - **Durations** 5 / 6 / 7 s (7 is tier-gated) at 18 fps (the model's native cadence). **Use 5 s.** Subject identity holds for
@@ -43,21 +49,22 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 - **`ultra` at 5 s** is the recommended shot. `ultimate` only for a final master you will not re-render.
 - **Frame rate** is 18 fps natively. `frameInterpolation: true` doubles it (36 fps) for twice the price — apply it on
   the shots you keep, not on tests.
-- **Gen8 Flash (Preview)** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
+- **Gen8 Preview video** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
   a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
   `aspectRatio`, and an optional audio reference: `upload_audio` an MP3 (5 min max, Holder+) and pass it as
   `audioCreationId` with `audioUse: "music"` (soundtrack / sound design) or `"voice"` (a voice sample the speaking
-  character follows) — it counts as one more reference. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s at launch, more with later
-  releases and higher tiers — read them from `get_account`, never assume. Long clips render for several minutes.
+  character follows) — it counts as one more reference. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s from Holder, every
+  preset and 12, 15, 17 or 20 s at Founder — read them from `get_account`, never assume. Long clips render for several minutes.
 - **Video styles and TIXI**: every video style except `raw` (and `auto`) runs TIXI on the prompt and cannot switch
   it off (the style guidance only exists through that rewrite). `style: "raw"` = your prompt verbatim; add
-  `enhance: true` to have TIXI write the motion scenario or the Gen8 Flash brief from a short idea, and start the
+  `enhance: true` to have TIXI write the motion scenario or the Gen8 Preview video brief from a short idea, and start the
   prompt with `tixi ` for a thinking pass (the word is dropped from what TIXI reads).
-- A video takes 1–3 minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
+- A Video (Gen 7.2) clip takes 1–3 minutes, a Gen8 Preview video clip several minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
   pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
   still-waiting job.
-- **Price** = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with `frameInterpolation`. `auto`
-  draws the preset, so two "identical" calls can cost differently — pin the preset; every submit returns the
+- **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with `frameInterpolation`.
+  Gen8 Preview video: priced per length (8 s ≈ 1.6×, 10 s ≈ 2×, 20 s ≈ 4× the 5 s price), +33 % per reference
+  after the first frame, the audio reference included; no interpolation. `auto` draws the preset, so two "identical" calls can cost differently — pin the preset; every submit returns the
   resolved `quality` next to `costUsd`.
 - The input is a still creation: an earlier generation, an `upload_image`, or a row from `list_creations`; an
   audio reference is an `upload_audio` row (`mediaKind: "audio"` in listings).
@@ -67,8 +74,8 @@ ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 - Prompt length follows the account's tier: **1,500 characters as a Guest, 8,000 at Supporter, 20,000 at Founder** — read the exact cap from `get_account` → `promptMaxChars` (and `promptMaxCharsNext` for the tier that raises it) and write to fit; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
 - Listing rows shorten `prompt` and `description` (ellipsis + `promptTruncated` flag); `get_creation` returns the
   full text — use it to re-read a prompt before replaying it with a variant.
-- Every referenced creation is checked at submit: an unknown id is refused with `CREATION_NOT_FOUND` and the
-  missing ids, before any charge.
+- Every referenced creation is checked at submit: an id that is unknown, in the trash, deleted, or not visible to
+  the account is refused with `CREATION_NOT_FOUND` and the ids, before any charge — restore or replace it.
 - TIXI (the platform's prompt enhancer) is **off by default** on `generate_image`: your prompt reaches the model
   verbatim (plus the style's own lead-in). Pass `enhance: true` for scenes with several elements or
   interactions — TIXI restructures the brief (subject and action, positions relative to objects and enclosures,
@@ -98,6 +105,11 @@ per shot. Check `get_account` before the shot loop.
   against one approved master image.
 - Generate variations at `max`, promote the keeper to `ultimate`, file everything with `manage_folder` and
   `organise_creation`, publish with `publish_creation` only when the account owner asked for it.
+- When `get_account` says `canUseImageNext`, compose with **Gen8 Preview images**: generate (or `upload_image`) the product,
+  the model, the place and the logo as separate stills, then one `generate_image` with `imageModel: "next"` and all
+  of them as `refCreationIds` (up to 6) — describe each reference by what it shows, never by its position ("the
+  woman with short silver hair wears the matte black headphones at the rooftop café"; never "the second reference")
+  and spell any on-image text in quotes; Gen8 Preview images render it legibly.
 
 ## 7. Content rating — a flagged result is not an error
 
@@ -115,6 +127,8 @@ per shot. Check `get_account` before the shot loop.
 ## 8. Do not
 
 - Probe presets or durations by submitting — read them from `get_account`.
+- Pass more than 3 `refCreationIds` to `generate_image` on the default model, or `imageModel: "next"` below Holder —
+  both are refused uncharged (`TOO_MANY_REFS`, `TOOL_NOT_ALLOWED_FOR_TIER`), but they waste a round-trip.
 - Request 6 / 7 s clips for character shots.
 - Generate finals at `ultimate` while iterating; iterate at `max` (images) or `normal` (video tests).
 - Assume $0.03 per image: that is the `fast` preset. Reference tools at `ultra` / `ultimate` cost several times more.
