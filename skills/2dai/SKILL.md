@@ -34,7 +34,7 @@ preset once you know what the shot is for. Reference tools (`face-ref`, `charact
 ladder and cost more per preset than a plain image; `get_stats` shows the burn.
 
 **Gen8 Preview images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
-(priced on render time, roughly 3× the Gen 7.2 preset; `auto` picks `high` or `max`): up to **6** `refCreationIds` kept natively (3 on the
+(priced on render time, roughly 4–7× the Gen 7.2 preset; `auto` picks `high` or `max`): up to **6** `refCreationIds` kept natively (3 on the
 default model), legible text in the picture, long literal prompts honoured — write the scene plainly, not as keyword
 lists. Every reference adds a surcharge on both image models. Holder and up: `get_account` reports `canUseImageNext`
 and `qualities.imageNext`; below the gate stay on the default model, never probe.

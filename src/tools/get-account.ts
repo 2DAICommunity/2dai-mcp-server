@@ -64,7 +64,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           ? (keyReachesNext
             ? 'Gen8 Preview images (generate_image with imageModel "next", up to 6 references) are locked on this tier — a submit answers 403 with the tier that opens it; use the default image model (3 references). '
             : 'Gen8 Preview images (generate_image with imageModel "next") are closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit); use the default image model (3 references) or a key without a channel policy. ')
-          : 'Gen8 Preview images (generate_image with imageModel "next", up to 6 refCreationIds, legible text, priced on render time at roughly 3× the Gen 7.2 preset): ' + presetLine('imageNext');
+          : 'Gen8 Preview images (generate_image with imageModel "next", up to 6 refCreationIds, legible text, priced on render time at roughly 4–7× the Gen 7.2 preset): ' + presetLine('imageNext');
       const durationLine = (() => {
         const list = me.videoDurations ?? [];
         if (list.length === 0) return '';
