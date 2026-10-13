@@ -13,7 +13,8 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         'Upload a local image (or base64 bytes) to the 2DAI cloud drive so it can be used as a ' +
         'reference for generation ("use THIS image"). Free, but the file goes through the platform\'s ' +
         'moderation pass — NSFW beyond the account\'s ceiling is rejected. Max 100 MB (Founder tier) — ' +
-        'lower tiers cap earlier, the server returns 413 with the account\'s actual max on excess. jpeg/png/webp. ' +
+        'lower tiers cap earlier, the server returns 413 with the account\'s actual max on excess. jpeg/png/webp/gif, ' +
+        'or an mp4/m4v video clip (stored as mp4; accounts allowed to upload videos only — a DRM-protected file is refused with PROTECTED_MEDIA). ' +
         (hasFs
           ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any. '
           : 'This server has no filesystem: send the bytes as base64, a path is refused. ') +
