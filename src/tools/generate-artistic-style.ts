@@ -15,15 +15,15 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
         'Artist Painter: render the prompt as a NEW work in a curated artistic style. This SPENDS the ' +
         'account\'s credit (billed like style-transfer). The subject is painted in the chosen style — ' +
         'unsigned unless the prompt asks for a signature. artisticStyleId comes from list_artistic_styles, ' +
-        'or "auto" (default) lets the server pick the best-matching style for the prompt. Up to 3 optional ' +
-        'subject images can anchor what gets painted. ' +
+        'or "auto" (default) lets the server pick the best-matching style for the prompt. Up to 6 optional ' +
+        'subject images can anchor what gets painted; the work renders on the Gen8 image engine. ' +
         'Needs a prompt OR at least one subject ref. Returns the finished creation within the wait budget, ' +
         'else a queueId for check_generation.',
       inputSchema: {
         prompt: z.string().max(20000).optional().describe('Your subject. Optional when refCreationIds is given. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         artisticStyleId: z.string().optional().describe('An artisticStyleId from list_artistic_styles, or "auto" (default).'),
-        refCreationIds: z.array(z.string().length(32)).max(3).optional()
-          .describe('Up to 3 subject images (creation ids) to place into the artistic style.'),
+        refCreationIds: z.array(z.string().length(32)).max(6).optional()
+          .describe('Up to 6 subject images (creation ids) to place into the artistic style.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),

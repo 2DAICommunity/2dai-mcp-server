@@ -28,6 +28,15 @@ may submit, so read it instead of guessing. Since 1.6.0 the clip can follow an *
 an MP3, then pass its id as `audioCreationId` (`audioUse: "music"` for a soundtrack, `"voice"` for a voice sample) —
 and TIXI writes the full scenario around it.
 
+## New in 2.0 — reference tools on the Gen8 image engine
+
+`generate_with_refs` and `generate_in_artistic_style` now render on the Gen8 image engine, which reads every
+reference natively: `character-ref` takes 1–6 shots of one character (face photos lock the exact same face, the
+prompt drives outfit, pose and scene), `style-transfer` 1–6 style sources, `smart-edit` the image to edit plus up to
+5 support refs, the artistic style up to 6 subject images. The former `face-ref` tool was merged into
+`character-ref` and is refused with `INVALID_TOOL`. Same preset ids and tier gates; prices follow the Gen8 image
+ladder plus a surcharge per reference (the ticket's `costUsd` is the truth).
+
 ## Quick start
 
 **Claude Code**
@@ -104,10 +113,10 @@ none). `upload_image` / `upload_audio` take `base64`. `GET /health` reports
 |---|---|---|---|
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
 | `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default); up to 3 `refCreationIds`, or Gen8 Preview images with `imageModel: "next"` — 6 references, legible text (Holder+) | generate | **yes** |
-| `generate_with_refs` | Image from references: `face-ref`, `character-ref`, `style-transfer`, `smart-edit` (edit refs[0] per the prompt) | generate | **yes** |
+| `generate_with_refs` | Image from references on the Gen8 image engine: `character-ref` (1–6 shots of one character, face photos lock the face), `style-transfer` (1–6 style sources), `smart-edit` (edit refs[0] per the prompt, up to 5 support refs) | generate | **yes** |
 | `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Preview video with sound via `videoModel: "next"`, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
-| `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 3 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
+| `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 6 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
@@ -192,7 +201,7 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   charge (restore it with `organise_creation`, or drop it).
 - **Prompts** are capped per account tier (1,500 characters as a Guest, 8,000 at Supporter, 20,000 at Founder): `get_account` reports the exact cap as `promptMaxChars` and the tier that raises it as `promptMaxCharsNext`; a longer `prompt` is refused with `PROMPT_TOO_LONG` before any charge, a longer `negativePrompt` is truncated to the cap.
   TIXI enhancement is off by default on `generate_image` (`enhance: true` rewrites a short brief into a full prompt);
-  `face-ref` and `character-ref`, wallpaper resize and the artistic-style tool always run it.
+  `character-ref`, wallpaper resize and the artistic-style tool always run it.
 - **Costs** are charged at submit against the account's USD credit and refunded on failure; `get_account`
   shows the headroom, `get_stats` the 30 / 90-day burn.
 - **Content rating is not an error.** Every output carries `nsfwLabel` / `nsfwRate`. From Near-nude (0.8) the

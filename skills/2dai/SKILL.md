@@ -30,8 +30,8 @@ every result lands in the account's cloud drive as a *creation* with a 32-char i
 
 `auto` (the default) lets the server pick by tier, weighted towards `max`; for video it draws `max` / `ultra` only and
 never `ultimate` (that preset needs dedicated render capacity that is not always available — ask for it explicitly). Prefer an explicit
-preset once you know what the shot is for. Reference tools (`face-ref`, `character-ref`, `style-transfer`, `smart-edit`) run on the same
-ladder and cost more per preset than a plain image; `get_stats` shows the burn.
+preset once you know what the shot is for. Reference tools (`character-ref`, `style-transfer`, `smart-edit`) and the artistic-style tool
+render on the Gen8 image engine: same preset ids, priced on the Gen8 ladder plus a surcharge per reference; `get_stats` shows the burn.
 
 **Gen8 Preview images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
 (priced on render time, roughly 4–7× the Gen 7.2 preset; `auto` picks `high` or `max`): up to **6** `refCreationIds` kept natively (3 on the
@@ -81,7 +81,7 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
   interactions — TIXI restructures the brief (subject and action, positions relative to objects and enclosures,
   secondary elements, setting, style) and removes most scene-logic errors. Either way keep the brief concrete:
   subject, action, framing, light, palette, mood. Put hard constraints (text to render, exact colours,
-  "no lettering") first. Reference tools (`face-ref`, `character-ref`), wallpaper resize and the artistic-style tool always run TIXI.
+  "no lettering") first. `character-ref`, wallpaper resize and the artistic-style tool always run TIXI.
 - Text inside images is unreliable at every preset; keep numbers and lettering short and check them on the result.
 
 ## 5. Recipe — a short film from a brief

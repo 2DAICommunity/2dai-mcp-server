@@ -5,7 +5,7 @@ import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
 const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'] as const;
-const REF_TOOLS = ['face-ref', 'character-ref', 'style-transfer', 'smart-edit'] as const;
+const REF_TOOLS = ['character-ref', 'style-transfer', 'smart-edit'] as const;
 
 export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
   server.registerTool(
@@ -14,16 +14,17 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
       title: 'Generate an image from references',
       description:
         'Generate an image conditioned on existing creations. This SPENDS the account\'s credit. ' +
-        'Four tools: "face-ref" keeps a face identity across new scenes (1-6 refs), "character-ref" ' +
-        'keeps a whole character consistent (1-6 refs), "style-transfer" extracts the STYLE of the refs ' +
-        '(1-3) and applies it to the prompt, "smart-edit" EDITS refs[0] following the prompt as the ' +
-        'edit instruction (up to 3 extra support refs, 4 total). Reference ids come from earlier ' +
+        'Three tools: "character-ref" keeps a character consistent across new scenes (1-6 refs: face shots, ' +
+        'full-body shots or a character sheet; face photos lock the exact same face, the prompt drives outfit, ' +
+        'pose and scene), "style-transfer" extracts the STYLE of the refs (1-6) and applies it to the prompt, ' +
+        '"smart-edit" EDITS refs[0] following the prompt as the edit instruction (up to 5 extra support refs, ' +
+        '6 total). All three render on the Gen8 image engine. Reference ids come from earlier ' +
         'generations, upload_image or list_creations. Returns the finished creation within the wait ' +
         'budget, else a queueId for check_generation.',
       inputSchema: {
         tool: z.enum(REF_TOOLS).describe('Which reference tool to run.'),
         refCreationIds: z.array(z.string().length(32)).min(1).max(6)
-          .describe('Creation ids to condition on. face/character-ref: 1-6 identity shots. style-transfer: 1-3 style sources. smart-edit: refs[0] = the image to EDIT, plus up to 3 support refs.'),
+          .describe('Creation ids to condition on. character-ref: 1-6 shots of the same character (face photos lock the face). style-transfer: 1-6 style sources. smart-edit: refs[0] = the image to EDIT, plus up to 5 support refs.'),
         prompt: z.string().max(20000).optional()
           .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
@@ -38,8 +39,8 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
     async (args, extra) => guard(async () => {
       if (args.tool === 'smart-edit') {
         if (!args.prompt) throw new Error('smart-edit needs a "prompt" — the edit instruction for refCreationIds[0].');
-        if (args.refCreationIds.length > 4) {
-          throw new Error('smart-edit takes at most 4 refs: the image to edit first, plus up to 3 support refs.');
+        if (args.refCreationIds.length > 6) {
+          throw new Error('smart-edit takes at most 6 refs: the image to edit first, plus up to 5 support refs.');
         }
       }
       const rc = { ...ctx, signal: extra.signal };
