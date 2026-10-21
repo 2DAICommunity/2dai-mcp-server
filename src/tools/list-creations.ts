@@ -1,10 +1,24 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok } from '../result.js';
+import { fail, guard, ok } from '../result.js';
 import { slimRow } from './rows.js';
 
 const ACTIVITIES = ['all', 'history', 'uploaded', 'likes', 'public', 'trash', 'sdk', 'mcp', 'portfolio'] as const;
 const SORTS = ['newest', 'oldest', 'updated', 'size-desc', 'size-asc', 'type-asc', 'type-desc'] as const;
+const RATIOS = ['square', 'landscape', 'portrait'] as const;
+const LIKE_FILTERS = ['liked', 'unliked'] as const;
+const MEDIA_KINDS = ['image', 'video', 'audio'] as const;
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:?\d{2})?)?$/;
+
+/** A day alone ("2026-10-20") means that whole day: `to` moves to its last millisecond (UTC). Only a full date or a
+ *  date-time passes — a bare year or "2026-10" would be misread (the API takes an all-digit value as epoch ms). */
+function dateBound(raw: string, end: boolean): string | null {
+  const v = raw.trim();
+  if (!ISO_RE.test(v)) return null;
+  const instant = end && DAY_RE.test(v) ? `${v}T23:59:59.999Z` : v;
+  return Number.isNaN(Date.parse(instant)) ? null : instant;
+}
 
 export const registerListCreations: RegisterTool = (server, ctx) => {
   server.registerTool(
@@ -18,8 +32,10 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         'creations inside starred folders); sharedFolderId for a folder another user shared with ' +
         'this account; or groupId for a folder group (every folder filed in it, one listing). ' +
         'Cross-cutting filters combine with any mode: search (whole words over ' +
-        'description + tags, trailing * makes a prefix), sort, hideFiled, and usedRef=<creationId> ' +
-        'for creations BUILT FROM that creation. Paginate by passing back nextBeforeDate (newest-first ' +
+        'description + tags, trailing * makes a prefix), sort, ratioFilter, from/to dates, likeFilter ' +
+        '(liked / unliked by this account), mediaKind (image — GIFs included — / video / audio), blockNsfw, ' +
+        'hideFiled, and usedRef=<creationId> for creations BUILT FROM that creation. random=true draws ' +
+        'from the same filtered set (images and videos only). Paginate by passing back nextBeforeDate (newest-first ' +
         'only) or with page. Rows carry nsfwFlagged/nsfwRate so you can apply your own content ' +
         'safeguards on top of the platform\'s. Each row has a viewUrl — the browser link to give the ' +
         'user (opens in their signed-in 2DAI drive). Costs nothing.',
@@ -45,10 +61,27 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
           .describe('Return ONE uniformly-random creation from the filtered set instead of a page (not available on trash).'),
         usedRef: z.string().length(32).optional()
           .describe('Only creations built FROM this creation (reference slots and lineage, clone families included).'),
+        ratioFilter: z.array(z.enum(RATIOS)).min(1).max(3).optional()
+          .describe('Aspect-ratio buckets to keep: any of "square", "landscape", "portrait".'),
+        from: z.string().optional()
+          .describe('Only creations made at or after this date or instant (ISO 8601, e.g. "2026-10-01" = from the start of that day, UTC).'),
+        to: z.string().optional()
+          .describe('Only creations made at or before this date or instant (ISO 8601; a day alone, e.g. "2026-10-20", includes that whole day, UTC).'),
+        likeFilter: z.enum(LIKE_FILTERS).optional()
+          .describe('"liked" = only the creations this account liked; "unliked" = only the others.'),
+        mediaKind: z.enum(MEDIA_KINDS).optional()
+          .describe('"image" (GIFs count as images), "video" or "audio" (MP3 uploads). Not "audio" with random=true.'),
+        blockNsfw: z.boolean().optional()
+          .describe('Hide NSFW creations on this call even when the account shows them.'),
       },
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async (args, extra) => guard(async () => {
+      const from = args.from ? dateBound(args.from, false) : undefined;
+      const to = args.to ? dateBound(args.to, true) : undefined;
+      if (from === null || to === null) {
+        return fail(new Error('from / to must be ISO 8601 dates, e.g. "2026-10-01" or "2026-10-01T12:00:00Z".'));
+      }
       const filters = {
         ...(args.folderId ? { folderId: args.folderId } : {}),
         ...(args.trashed !== undefined ? { trashed: args.trashed } : {}),
@@ -60,6 +93,12 @@ export const registerListCreations: RegisterTool = (server, ctx) => {
         ...(args.sort ? { sort: args.sort } : {}),
         ...(args.hideFiled !== undefined ? { hideFiled: args.hideFiled } : {}),
         ...(args.usedRef ? { usedRef: args.usedRef } : {}),
+        ...(args.ratioFilter?.length ? { ratioFilter: args.ratioFilter.join(',') } : {}),
+        ...(from ? { from } : {}),
+        ...(to ? { to } : {}),
+        ...(args.likeFilter ? { likeFilter: args.likeFilter } : {}),
+        ...(args.mediaKind ? { mediaKind: args.mediaKind } : {}),
+        ...(args.blockNsfw ? { blockNsfw: true } : {}),
       };
 
       if (args.random) {

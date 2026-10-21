@@ -16,7 +16,7 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         'Returns the finished creation when it lands within the wait budget, otherwise a queueId to poll ' +
         'with check_generation. Style and quality default to "auto" (the server picks by tier). ' +
         'Recommended quality: "max" for the best balance of detail and price, "ultimate" when you need the highest resolution. ' +
-        'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier; high or max on imageModel "next"), so pin the ' +
+        'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier, on both image models), so pin the ' +
         'preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
         'imageModel "next" = Gen8 Preview images, the new image engine: up to 6 refCreationIds kept natively (3 on the default model), ' +
         'legible text in the picture, long literal prompts honoured, the same quality ids at a slightly higher price; every reference adds a surcharge on both models. ' +
