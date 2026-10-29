@@ -23,7 +23,7 @@ it instead of probing.
 `generate_video` with `videoModel: "next"` runs **Gen8 Preview video**, the preview of 2DAI's next video engine: clips
 come out **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
 consistent), with an optional `aspectRatio`. Every account with video gets `fast` quality and 1, 5, 8 or 10 s;
-Founder adds every preset and 12, 15, 17 or 20 s — `get_account` always lists what the account
+Believer adds `normal`, Supporter `high`, and Founder every preset and 12, 15, 17 or 20 s — `get_account` always lists what the account
 may submit, so read it instead of guessing. Since 1.6.0 the clip can follow an **audio reference** too: `upload_audio`
 an MP3, then pass its id as `audioCreationId` (`audioUse: "music"` for a soundtrack, `"voice"` for a voice sample) —
 and TIXI writes the full scenario around it.
@@ -173,15 +173,15 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   shots rather than one long take.
 - **Gen8 Preview images** (`generate_image` with `imageModel: "next"`, the new image engine) keep up to 6 `refCreationIds`
   natively (3 on the default model), renders legible text and honours long literal prompts — describe the scene
-  plainly rather than in keyword lists. Same quality ids, priced on render time at roughly 4–7× the Gen 7.2 preset, and every reference adds a
+  plainly rather than in keyword lists. Same quality ids, priced on render time at about 1.2–2.6× the Gen 7.2 preset, and every reference adds a
   surcharge on both models. Holder and up: `get_account` reports `canUseImageNext` and `qualities.imageNext`; a
   submit below the gate is refused with the tier that opens it, uncharged. The other image tools stay on Gen 7.2.
 - **Gen8 Preview video** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
   up to 6 `refCreationIds` (each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first frame's
   ratio) and an optional audio reference — an MP3 from `upload_audio` as `audioCreationId`, `audioUse: "music"`
   (soundtrack / sound design) or `"voice"` (a voice sample the speaking character follows); it counts as one more
-  reference. Lengths and presets depend on the account — `fast` quality and 1, 5, 8 or 10 s from Holder, every preset
-  and up to 20 s at Founder: `get_account` lists what the account may submit. Long clips render for several minutes:
+  reference. Lengths and presets depend on the account — `fast` quality and 1, 5, 8 or 10 s from Holder, `normal` from Believer, `high`
+  from Supporter, every preset and up to 20 s at Founder: `get_account` lists what the account may submit. Long clips render for several minutes:
   expect a `queueId` and collect it with `check_generation`.
 - **Video styles and TIXI.** Every video style except `raw` (and `auto`) runs TIXI on the prompt: the style's
   guidance only exists through that rewrite, so it cannot be switched off. `style: "raw"` sends the prompt verbatim —
@@ -189,7 +189,8 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   pictures, sound) from a short idea; a prompt starting with `tixi ` adds a thinking pass (the word is dropped from what TIXI
   reads). No extra credit either way.
 - **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation.
-  Gen8 Preview video: priced per length (8 s ≈ 1.6×, 10 s ≈ 2×, 20 s ≈ 4× the 5 s price), +33 % per reference after
+  Gen8 Preview video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
+  20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after
   the first frame, the audio reference included; no interpolation. `auto` draws the
   preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
   resolved `quality` next to `costUsd`.

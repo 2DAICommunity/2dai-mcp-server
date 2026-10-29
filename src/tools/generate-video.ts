@@ -22,8 +22,8 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'videoModel "next" = Gen8 Preview video, the new video engine: clips WITH sound, from the first frame plus up to 6 refCreationIds ' +
         '(characters, props, places — each adds a surcharge), optional aspectRatio, and an optional AUDIO REFERENCE: an MP3 uploaded with ' +
         'upload_audio as audioCreationId, used as music (soundtrack / sound design) or as a voice sample (audioUse) — it counts as one more reference. ' +
-        'No frameInterpolation; priced per length (8 s ≈ 1.6×, 10 s ≈ 2×, 20 s ≈ 4× the 5 s price), +33 % per reference after the first frame. Lengths and quality presets ' +
-        'depend on the account: Fast quality and 1, 5, 8 or 10 seconds from Holder, every preset and 12, 15, 17 or 20 seconds at Founder — ' +
+        'No frameInterpolation; priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×, 20 s ≈ 6–12× the 5 s price), +5 % per reference after the first frame. Lengths and quality presets ' +
+        'depend on the account: Fast quality and 1, 5, 8 or 10 seconds from Holder, Normal from Believer, High from Supporter, every preset and 12, 15, 17 or 20 seconds at Founder — ' +
         'get_account lists what this account may submit, never guess. Long clips render for several minutes: expect a queueId to collect with check_generation.',
       inputSchema: {
         prompt: z.string().min(1).max(20000)
