@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
+import { ASPECT_RATIO_HINT, IMAGE_ASPECT_RATIOS } from './aspect-ratio.js';
 import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
-const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'] as const;
+const ASPECT_RATIOS = IMAGE_ASPECT_RATIOS;
 const REF_TOOLS = ['character-ref', 'style-transfer', 'smart-edit'] as const;
 
 export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
@@ -27,7 +28,7 @@ export const registerGenerateWithRefs: RegisterTool = (server, ctx) => {
           .describe('Creation ids to condition on. character-ref: 1-6 shots of the same character (face photos lock the face). style-transfer: 1-6 style sources. smart-edit: refs[0] = the image to EDIT, plus up to 5 support refs.'),
         prompt: z.string().max(20000).optional()
           .describe('The scene to generate. Optional for style-transfer (the refs carry the style). For smart-edit this is the edit instruction and is required. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
-        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
+        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe(ASPECT_RATIO_HINT),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         extractionDirective: z.string().optional()

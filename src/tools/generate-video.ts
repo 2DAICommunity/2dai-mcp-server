@@ -36,7 +36,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
           .describe(`${GEN8_VIDEO} only: up to 6 more reference creations after the first frame (characters, props, places). Each adds a surcharge.`),
         aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16']).optional()
-          .describe(`${GEN8_VIDEO} only: output shape. "auto" (default) keeps the first frame's ratio.`),
+          .describe(`${GEN8_VIDEO} only: output shape. "auto" (default) keeps the first frame's ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait.`),
         audioCreationId: z.string().length(32).optional()
           .describe(`${GEN8_VIDEO} only: an audio creation from upload_audio (an MP3 of the account) used as the clip's audio reference; counts as one more reference for the price. Rejected on the default model (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).`),
         audioUse: z.enum(['music', 'voice']).optional()

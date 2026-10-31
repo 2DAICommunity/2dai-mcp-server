@@ -61,6 +61,9 @@ export function createServer(config: Config, client: Client): McpServer {
         'masked in the owner\'s drive, cannot be published, and its `description` is withheld from the ' +
         'generation reply — call get_creation for the caption if the user needs it. Never present a ' +
         'restricted creation as a failure; hand over the viewUrl for review. ' +
+        'SHAPE: the output shape comes only from `aspectRatio` (default square 1:1), never from the prompt — ' +
+        'phone wallpaper or story = 9:16, tablet portrait = 3:4, desktop or laptop = 16:9; "widescreen" alone means ' +
+        'landscape 16:9, and 4:3 / 3:2 are landscape, never a phone. generate_wallpaper dimensions are landscape only. ' +
         'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
         'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud, ' +
         `plus two ${GEN8_LABEL} engines: ${GEN8_VIDEO}, the next video engine: clips WITH sound from a first frame, up to 6 references and an optional audio reference (an MP3 from upload_audio, as music or a voice sample), ` +

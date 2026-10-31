@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
+import { ASPECT_RATIO_HINT, IMAGE_ASPECT_RATIOS } from './aspect-ratio.js';
 import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 
-const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'] as const;
+const ASPECT_RATIOS = IMAGE_ASPECT_RATIOS;
 
 export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
   server.registerTool(
@@ -24,7 +25,7 @@ export const registerGenerateArtisticStyle: RegisterTool = (server, ctx) => {
         artisticStyleId: z.string().optional().describe('An artisticStyleId from list_artistic_styles, or "auto" (default).'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
           .describe('Up to 6 subject images (creation ids) to place into the artistic style.'),
-        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
+        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe(ASPECT_RATIO_HINT),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block until ready (default true). Set false to get a queueId immediately.'),

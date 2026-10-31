@@ -83,6 +83,11 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
   subject, action, framing, light, palette, mood. Put hard constraints (text to render, exact colours,
   "no lettering") first. `character-ref`, wallpaper resize and the artistic-style tool always run TIXI.
 - Text inside images is unreliable at every preset; keep numbers and lettering short and check them on the result.
+- **Shape = `aspectRatio`, always passed.** The prompt never sets the shape and the default is a square `1:1`.
+  Phone wallpaper, story, Reels, TikTok = `9:16`; tablet upright or poster = `3:4`; book cover or character sheet =
+  `2:3`; photo print or X post = `3:2`; tablet sideways or classic monitor = `4:3`; desktop or laptop wallpaper,
+  YouTube cover = `16:9`. "Widescreen" alone is landscape `16:9`; a phone is `9:16`. For a device set (iPhone +
+  iPad + MacBook), one picture per device in its own ratio. A phone result must come back with `height > width`.
 
 ## 5. Recipe — a short film from a brief
 
@@ -130,6 +135,8 @@ per shot. Check `get_account` before the shot loop.
 - Pass more than 3 `refCreationIds` to `generate_image` on the default model, or `imageModel: "next"` below Holder —
   both are refused uncharged (`TOO_MANY_REFS`, `TOOL_NOT_ALLOWED_FOR_TIER`), but they waste a round-trip.
 - Request 6 / 7 s clips for character shots.
+- Use `4:3` or `3:2` for a phone picture (both are landscape), or `generate_wallpaper` for a phone wallpaper — its
+  `standard` / `photo` / `widescreen` / `ultrawide` dimensions are landscape monitor formats.
 - Generate finals at `ultimate` while iterating; iterate at `max` (images) or `normal` (video tests).
 - Assume $0.03 per image: that is the `fast` preset. Reference tools at `ultra` / `ultimate` cost several times more.
 - Store the API key anywhere but the MCP env; the key is what spends the credit.

@@ -13,14 +13,15 @@ export const registerGenerateWallpaper: RegisterTool = (server, ctx) => {
         'Expand an existing creation into a wallpaper format — the original content is preserved and ' +
         'the surroundings are painted outward to fill the new shape. This SPENDS the account\'s ' +
         'credit: the price follows the chosen dimension, and quality is fixed at Ultra (there is no ' +
-        'quality knob on this tool). Dimensions: "standard", "photo", "widescreen", "ultrawide" — ' +
+        'quality knob on this tool). Dimensions: "standard" (4:3), "photo" (3:2), "widescreen" (16:9), "ultrawide" (21:9), ' +
+        'all landscape for monitors (a phone wallpaper is a generate_image call with aspectRatio "9:16") — ' +
         'unknown values are rejected. Optional extra refs and a prompt steer the newly painted areas. ' +
         'Returns the finished creation within the wait budget, else a queueId for check_generation.',
       inputSchema: {
         inputCreationId: z.string().length(32)
           .describe('The creation to expand — from an earlier generation, upload_image or list_creations.'),
         dimension: z.string().min(1)
-          .describe('Target wallpaper dimension id: "standard", "photo", "widescreen" or "ultrawide". Drives the price.'),
+          .describe('Target wallpaper dimension id: "standard" (4:3), "photo" (3:2), "widescreen" (16:9) or "ultrawide" (21:9) — all LANDSCAPE monitor formats. A phone wallpaper is not a wallpaper-resize job: generate it with generate_image and aspectRatio "9:16". Drives the price.'),
         refCreationIds: z.array(z.string().length(32)).max(3).optional()
           .describe('Up to 3 extra reference creations to steer the expanded areas.'),
         prompt: z.string().max(20000).optional()

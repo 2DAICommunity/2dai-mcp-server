@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
+import { ASPECT_RATIO_HINT, IMAGE_ASPECT_RATIOS } from './aspect-ratio.js';
 import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
 import { GEN8_IMAGES } from './engine-labels.js';
 
-const ASPECT_RATIOS = ['1:1', '16:9', '9:16', '4:3', '3:4', '3:2', '2:3'] as const;
+const ASPECT_RATIOS = IMAGE_ASPECT_RATIOS;
 
 export const registerGenerateImage: RegisterTool = (server, ctx) => {
   server.registerTool(
@@ -28,7 +29,7 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
           .describe(`"default" (Gen 7.2, up to 3 references) or "next" (${GEN8_IMAGES}: up to 6 references, legible text, long literal prompts; Holder and up — see get_account canUseImageNext). Default "default".`),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
           .describe('Reference creations the image should follow (characters, products, places): up to 3 on the default model, up to 6 with imageModel "next". Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
-        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe('Shape of the output. Defaults to 1:1.'),
+        aspectRatio: z.enum(ASPECT_RATIOS).optional().describe(ASPECT_RATIO_HINT),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
         negativePrompt: z.string().max(20000).optional().describe(`What to avoid in the image. Optional — applied by ${GEN8_IMAGES} (imageModel "next"); the Gen7 image engine renders without it. Lower below Founder: see get_account → recommendation.promptMaxChars.`),
