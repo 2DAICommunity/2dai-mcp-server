@@ -3,6 +3,7 @@ import type { RegisterTool } from './types.js';
 import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, previewBlock, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
+import { GEN8_VIDEO } from './engine-labels.js';
 
 export const registerGenerateVideo: RegisterTool = (server, ctx) => {
   server.registerTool(
@@ -19,7 +20,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         'and name the light colour in the motion prompt when the scene is lit in colour (limits colour drift). ' +
         'Price (Video) = tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with frameInterpolation; "auto" draws the preset, ' +
         'so pin the preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
-        'videoModel "next" = Gen8 Preview video, the new video engine: clips WITH sound, from the first frame plus up to 6 refCreationIds ' +
+        `videoModel "next" = ${GEN8_VIDEO}, the new video engine: clips WITH sound, from the first frame plus up to 6 refCreationIds ` +
         '(characters, props, places — each adds a surcharge), optional aspectRatio, and an optional AUDIO REFERENCE: an MP3 uploaded with ' +
         'upload_audio as audioCreationId, used as music (soundtrack / sound design) or as a voice sample (audioUse) — it counts as one more reference. ' +
         'No frameInterpolation; priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×, 20 s ≈ 6–12× the 5 s price), +5 % per reference after the first frame. Lengths and quality presets ' +
@@ -31,19 +32,19 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         inputCreationId: z.string().length(32)
           .describe('The still creation to animate (the first frame) — from an earlier generation, upload_image or list_creations.'),
         videoModel: z.enum(['default', 'next']).optional()
-          .describe('"default" (Video: silent, 5, 6 or 7 s) or "next" (Gen8 Preview video: with sound, up to 6 references; lengths per get_account). Default "default".'),
+          .describe(`"default" (Video: silent, 5, 6 or 7 s) or "next" (${GEN8_VIDEO}: with sound, up to 6 references; lengths per get_account). Default "default".`),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
-          .describe('Gen8 Preview video only: up to 6 more reference creations after the first frame (characters, props, places). Each adds a surcharge.'),
+          .describe(`${GEN8_VIDEO} only: up to 6 more reference creations after the first frame (characters, props, places). Each adds a surcharge.`),
         aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16']).optional()
-          .describe('Gen8 Preview video only: output shape. "auto" (default) keeps the first frame\'s ratio.'),
+          .describe(`${GEN8_VIDEO} only: output shape. "auto" (default) keeps the first frame's ratio.`),
         audioCreationId: z.string().length(32).optional()
-          .describe('Gen8 Preview video only: an audio creation from upload_audio (an MP3 of the account) used as the clip\'s audio reference; counts as one more reference for the price. Rejected on the default model (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).'),
+          .describe(`${GEN8_VIDEO} only: an audio creation from upload_audio (an MP3 of the account) used as the clip's audio reference; counts as one more reference for the price. Rejected on the default model (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).`),
         audioUse: z.enum(['music', 'voice']).optional()
           .describe('How the audio reference is used: "music" = soundtrack / sound design (default), "voice" = a voice sample the speaking character follows.'),
-        duration: z.number().optional().describe('Clip length in seconds. Video: 5 (recommended), 6 or 7 (7 is tier-gated). Gen8 Preview video (videoModel next): the lengths get_account lists for this account (1, 5, 8 or 10 from Holder; 12, 15, 17 or 20 at Founder). Default 5. On Video, subjects stay coherent best on short clips: prefer several 5-second shots over one long one.'),
+        duration: z.number().optional().describe(`Clip length in seconds. Video: 5 (recommended), 6 or 7 (7 is tier-gated). ${GEN8_VIDEO} (videoModel next): the lengths get_account lists for this account (1, 5, 8 or 10 from Holder; 12, 15, 17 or 20 at Founder). Default 5. On Video, subjects stay coherent best on short clips: prefer several 5-second shots over one long one.`),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "ultra" (800p) at 5 seconds for the best coherence for the price; "ultimate" is 1080p with the longest wait. Ultra and ultimate are tier-gated.'),
         style: z.string().optional().describe('Motion style id, or "auto" (default). Every style except "raw" runs TIXI on the prompt (the style guidance only exists through that rewrite); "raw" sends the prompt verbatim unless enhance is true.'),
-        enhance: z.boolean().optional().describe('Run TIXI on the prompt with style "raw": TIXI writes the motion scenario (Video) or the full Gen8 Preview video brief (shots, pictures, sound) from your idea; a prompt starting with "tixi " adds a thinking pass. Every other style already runs TIXI and cannot switch it off. No extra credit.'),
+        enhance: z.boolean().optional().describe(`Run TIXI on the prompt with style "raw": TIXI writes the motion scenario (Video) or the full ${GEN8_VIDEO} brief (shots, pictures, sound) from your idea; a prompt starting with "tixi " adds a thinking pass. Every other style already runs TIXI and cannot switch it off. No extra credit.`),
         frameInterpolation: z.boolean().optional().describe('Smoother motion via frame interpolation (costs more).'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         wait: z.boolean().optional().describe('Block up to the wait budget (default true). Set false to get the queueId immediately.'),

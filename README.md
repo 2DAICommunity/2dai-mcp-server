@@ -10,17 +10,17 @@ your cloud drive **on your own 2DAI account**.
 - Authenticates with a 2DAI API key (create one at **2dai.io → Dashboard → Integrations → API keys**).
 - Finished images come back as inline previews so the model can see what it made and iterate.
 
-## New — Gen8 Preview images
+## New — Gen8.1 images
 
-`generate_image` with `imageModel: "next"` runs **Gen8 Preview images**, the preview of 2DAI's next image engine: up to **6**
+`generate_image` with `imageModel: "next"` runs **Gen8.1 images**, 2DAI's next image engine: up to **6**
 `refCreationIds` kept natively (3 on the default model), legible text in the picture, long literal prompts honoured,
 the same quality ids at a slightly higher price — every reference adds a surcharge on both image models. The channel
 opens at Holder: `get_account` says whether the account may use it (`canUseImageNext`, `qualities.imageNext`), so read
 it instead of probing.
 
-## Gen8 Preview video
+## Gen8.1 video
 
-`generate_video` with `videoModel: "next"` runs **Gen8 Preview video**, the preview of 2DAI's next video engine: clips
+`generate_video` with `videoModel: "next"` runs **Gen8.1 video**, 2DAI's next video engine: clips
 come out **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
 consistent), with an optional `aspectRatio`. Every account with video gets `fast` quality and 1, 5, 8 or 10 s;
 Believer adds `normal`, Supporter `high`, and Founder every preset and 12, 15, 17 or 20 s — `get_account` always lists what the account
@@ -112,16 +112,16 @@ none). `upload_image` / `upload_audio` take `base64`. `GET /health` reports
 | Tool | What it does | Scope | Spends credit |
 |---|---|---|---|
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
-| `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default); up to 3 `refCreationIds`, or Gen8 Preview images with `imageModel: "next"` — 6 references, legible text (Holder+) | generate | **yes** |
+| `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default); up to 3 `refCreationIds`, or Gen8.1 images with `imageModel: "next"` — 6 references, legible text (Holder+) | generate | **yes** |
 | `generate_with_refs` | Image from references on the Gen8 image engine: `character-ref` (1–6 shots of one character, face photos lock the face), `style-transfer` (1–6 style sources), `smart-edit` (edit refs[0] per the prompt, up to 5 support refs) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip (Video, or Gen8 Preview video with sound via `videoModel: "next"`, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip (Video, or Gen8.1 video with sound via `videoModel: "next"`, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 6 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
 | `generate_wallpaper` | Expand a creation into a wallpaper dimension (`standard`, `photo`, `widescreen`, `ultrawide`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
 | `upload_image` | Upload a local image / base64 as a reference (hosted: base64 only) | generate | no |
-| `upload_audio` | Upload a local MP3 / base64 as the audio reference of a Gen8 Preview video clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
+| `upload_audio` | Upload a local MP3 / base64 as the audio reference of a Gen8.1 video clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
 | `download_creation` | Save the full-resolution asset to disk, or return an inline preview (hosted: inline preview + `downloadUrl`) | read | no |
 | `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
 | `list_creations` | Page, search, sort and filter the library (folders, folder groups, trash, activity lenses, smart collections, shared folders, random pick; likes, type, aspect ratio, dates, NSFW block). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
@@ -171,12 +171,12 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   rate to 36 fps for twice the price). Subject
   identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
   shots rather than one long take.
-- **Gen8 Preview images** (`generate_image` with `imageModel: "next"`, the new image engine) keep up to 6 `refCreationIds`
+- **Gen8.1 images** (`generate_image` with `imageModel: "next"`, the new image engine) keep up to 6 `refCreationIds`
   natively (3 on the default model), renders legible text and honours long literal prompts — describe the scene
   plainly rather than in keyword lists. Same quality ids, priced on render time at about 1.1–1.9× the Gen 7.2 preset, and every reference adds a
   surcharge on both models. Holder and up: `get_account` reports `canUseImageNext` and `qualities.imageNext`; a
   submit below the gate is refused with the tier that opens it, uncharged. The other image tools stay on Gen 7.2.
-- **Gen8 Preview video** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
+- **Gen8.1 video** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
   up to 6 `refCreationIds` (each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first frame's
   ratio) and an optional audio reference — an MP3 from `upload_audio` as `audioCreationId`, `audioUse: "music"`
   (soundtrack / sound design) or `"voice"` (a voice sample the speaking character follows); it counts as one more
@@ -185,11 +185,11 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   expect a `queueId` and collect it with `check_generation`.
 - **Video styles and TIXI.** Every video style except `raw` (and `auto`) runs TIXI on the prompt: the style's
   guidance only exists through that rewrite, so it cannot be switched off. `style: "raw"` sends the prompt verbatim —
-  pass `enhance: true` to have TIXI write the motion scenario (Video) or the full Gen8 Preview video brief (shots,
+  pass `enhance: true` to have TIXI write the motion scenario (Video) or the full Gen8.1 video brief (shots,
   pictures, sound) from a short idea; a prompt starting with `tixi ` adds a thinking pass (the word is dropped from what TIXI
   reads). No extra credit either way.
 - **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation.
-  Gen8 Preview video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
+  Gen8.1 video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
   20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after
   the first frame, the audio reference included; no interpolation. `auto` draws the
   preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
@@ -219,8 +219,8 @@ access. All our models originate from the open-source community or our own R&D
 — we then disassemble, modify, fine-tune and optimize them to align with our
 legacy and **2DAI❤️ART** lines. They also run on our own private cloud network.
 
-The **Gen8** generation is rolling out as two previews behind the `next` channels: Gen8 Preview video
-(`videoModel: "next"`, clips with sound) and Gen8 Preview images (`imageModel: "next"`, 6 references). Same rule, same
+The **Gen8** generation is rolling out as two engines behind the `next` channels: Gen8.1 video
+(`videoModel: "next"`, clips with sound) and Gen8.1 images (`imageModel: "next"`, 6 references). Same rule, same
 cloud; `get_account.modelChannels` names the engine behind each channel.
 
 Every tool response carries the model version and stack summary (via

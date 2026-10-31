@@ -33,7 +33,7 @@ never `ultimate` (that preset needs dedicated render capacity that is not always
 preset once you know what the shot is for. Reference tools (`character-ref`, `style-transfer`, `smart-edit`) and the artistic-style tool
 render on the Gen8 image engine: same preset ids, priced on the Gen8 ladder plus a surcharge per reference; `get_stats` shows the burn.
 
-**Gen8 Preview images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
+**Gen8.1 images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
 (priced on render time, about 1.1–1.9× the Gen 7.2 preset; `auto` draws the preset by tier like the default model): up to **6** `refCreationIds` kept natively (3 on the
 default model), legible text in the picture, long literal prompts honoured — write the scene plainly, not as keyword
 lists. Every reference adds a surcharge on both image models. Holder and up: `get_account` reports `canUseImageNext`
@@ -49,7 +49,7 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
 - **`ultra` at 5 s** is the recommended shot. `ultimate` only for a final master you will not re-render.
 - **Frame rate** is 18 fps natively. `frameInterpolation: true` doubles it (36 fps) for twice the price — apply it on
   the shots you keep, not on tests.
-- **Gen8 Preview video** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
+- **Gen8.1 video** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
   a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
   `aspectRatio`, and an optional audio reference: `upload_audio` an MP3 (5 min max, Holder+) and pass it as
   `audioCreationId` with `audioUse: "music"` (soundtrack / sound design) or `"voice"` (a voice sample the speaking
@@ -57,13 +57,13 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
   from Believer, `high` from Supporter, every preset and 12, 15, 17 or 20 s at Founder — read them from `get_account`, never assume. Long clips render for several minutes.
 - **Video styles and TIXI**: every video style except `raw` (and `auto`) runs TIXI on the prompt and cannot switch
   it off (the style guidance only exists through that rewrite). `style: "raw"` = your prompt verbatim; add
-  `enhance: true` to have TIXI write the motion scenario or the Gen8 Preview video brief from a short idea, and start the
+  `enhance: true` to have TIXI write the motion scenario or the Gen8.1 video brief from a short idea, and start the
   prompt with `tixi ` for a thinking pass (the word is dropped from what TIXI reads).
-- A Video (Gen 7.2) clip takes 1–3 minutes, a Gen8 Preview video clip several minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
+- A Video (Gen 7.2) clip takes 1–3 minutes, a Gen8.1 video clip several minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
   pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
   still-waiting job.
 - **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with `frameInterpolation`.
-  Gen8 Preview video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
+  Gen8.1 video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
   20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after the first frame, the audio reference included; no interpolation. `auto` draws the preset, so two "identical" calls can cost differently — pin the preset; every submit returns the
   resolved `quality` next to `costUsd`.
 - The input is a still creation: an earlier generation, an `upload_image`, or a row from `list_creations`; an
@@ -105,11 +105,11 @@ per shot. Check `get_account` before the shot loop.
   against one approved master image.
 - Generate variations at `max`, promote the keeper to `ultimate`, file everything with `manage_folder` and
   `organise_creation`, publish with `publish_creation` only when the account owner asked for it.
-- When `get_account` says `canUseImageNext`, compose with **Gen8 Preview images**: generate (or `upload_image`) the product,
+- When `get_account` says `canUseImageNext`, compose with **Gen8.1 images**: generate (or `upload_image`) the product,
   the model, the place and the logo as separate stills, then one `generate_image` with `imageModel: "next"` and all
   of them as `refCreationIds` (up to 6) — describe each reference by what it shows, never by its position ("the
   woman with short silver hair wears the matte black headphones at the rooftop café"; never "the second reference")
-  and spell any on-image text in quotes; Gen8 Preview images render it legibly.
+  and spell any on-image text in quotes; Gen8.1 images render it legibly.
 
 ## 7. Content rating — a flagged result is not an error
 

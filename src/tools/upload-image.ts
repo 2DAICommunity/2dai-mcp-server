@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { RegisterTool } from './types.js';
 import { guard, ok, viewUrlFor } from '../result.js';
 import { resolveReadPath } from '../paths.js';
+import { GEN8_VIDEO } from './engine-labels.js';
 
 export const registerUploadImage: RegisterTool = (server, ctx) => {
   const hasFs = ctx.config.fileAccess !== 'none';
@@ -18,7 +19,7 @@ export const registerUploadImage: RegisterTool = (server, ctx) => {
         (hasFs
           ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any. '
           : 'This server has no filesystem: send the bytes as base64, a path is refused. ') +
-        'An MP3 for a Gen8 Preview video audio reference goes through upload_audio instead.',
+        `An MP3 for a ${GEN8_VIDEO} audio reference goes through upload_audio instead.`,
       inputSchema: {
         path: z.string().optional().describe(hasFs
           ? 'Path to the image file, relative to the working directory.'

@@ -3,6 +3,7 @@ import {
   TierError, NsfwRejectedError, QueueLimitError, NotFoundError, RateLimitError,
   ValidationError, GenerationFailedError, TimeoutError,
 } from '2dai-cloud-sdk';
+import { GEN8_VIDEO } from './tools/engine-labels.js';
 
 /** Turns an SDK error into one sentence the model can both relay and act on.
  *  Every tool returns these as `isError: true` results rather than throwing —
@@ -102,7 +103,7 @@ export function describeError(err: unknown): string {
       return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references (got ${d.got ?? '?'}). Nothing was charged. generate_image takes 3 on the default model and 6 with imageModel "next" (Holder and up).`;
     }
     if (err.code === 'AUDIO_REF_NEXT_ONLY') {
-      return 'AUDIO_REF_NEXT_ONLY: an audio reference only works on Gen8 Preview video — set videoModel "next". Nothing was charged.';
+      return `AUDIO_REF_NEXT_ONLY: an audio reference only works on ${GEN8_VIDEO} — set videoModel "next". Nothing was charged.`;
     }
     if (err.code === 'AUDIO_TOO_LONG') {
       const max = (err as any).details?.maxSeconds;
