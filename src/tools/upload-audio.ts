@@ -2,7 +2,6 @@ import { z } from 'zod';
 import type { RegisterTool } from './types.js';
 import { guard, ok, viewUrlFor } from '../result.js';
 import { resolveReadPath } from '../paths.js';
-import { GEN8_VIDEO } from './engine-labels.js';
 
 export const registerUploadAudio: RegisterTool = (server, ctx) => {
   const hasFs = ctx.config.fileAccess !== 'none';
@@ -12,9 +11,10 @@ export const registerUploadAudio: RegisterTool = (server, ctx) => {
       title: 'Upload an audio file',
       description:
         'Upload a local MP3 (or base64 bytes) to the 2DAI cloud drive so it can be the AUDIO REFERENCE of a ' +
-        `${GEN8_VIDEO} clip: pass the returned creationId as audioCreationId to generate_video with videoModel "next", ` +
-        'with audioUse "music" (soundtrack / sound design) or "voice" (a voice sample the speaking character follows). ' +
-        'MP3 only, 5 minutes max (400 AUDIO_TOO_LONG), Holder tier and up (403 AUDIO_NOT_ALLOWED). Free; no vision ' +
+        'video clip: pass the returned creationId as audioCreationId to generate_video, on a channel whose engine ' +
+        'renders sound (get_account → platform.engines), with audioUse "music" (soundtrack / sound design) or "voice" ' +
+        '(a voice sample the speaking character follows). MP3 only, 5 minutes max (400 AUDIO_TOO_LONG), tier-gated ' +
+        '(403 AUDIO_NOT_ALLOWED below the tier that opens it). Free; no vision ' +
         'caption — the file name and length label it in the drive. ' +
         (hasFs
           ? 'Paths must stay inside the working directory unless the server was started with TWODAI_FILE_ACCESS=any.'
@@ -46,7 +46,7 @@ export const registerUploadAudio: RegisterTool = (server, ctx) => {
       const secs = typeof creation.duration === 'number' ? Math.round(creation.duration * 10) / 10 : undefined;
       return ok(
         `Uploaded${args.targetFolderId ? ` into folder ${args.targetFolderId}` : ''}. creationId ${creation.creationId}` +
-        `${secs ? ` (${secs} s)` : ''} — pass it as audioCreationId to generate_video with videoModel "next" ` +
+        `${secs ? ` (${secs} s)` : ''} — pass it as audioCreationId to generate_video ` +
         `(audioUse "music" or "voice"); it counts as one more reference for the price.`,
         {
           creationId: creation.creationId,

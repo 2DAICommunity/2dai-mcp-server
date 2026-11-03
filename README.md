@@ -10,23 +10,23 @@ your cloud drive **on your own 2DAI account**.
 - Authenticates with a 2DAI API key (create one at **2dai.io → Dashboard → Integrations → API keys**).
 - Finished images come back as inline previews so the model can see what it made and iterate.
 
-## New — Gen8.1 images
+## New in 2.2 — Gen8 on the default channels
 
-`generate_image` with `imageModel: "next"` runs **Gen8.1 images**, 2DAI's next image engine: up to **6**
-`refCreationIds` kept natively (3 on the default model), legible text in the picture, long literal prompts honoured,
-the same quality ids at a slightly higher price — every reference adds a surcharge on both image models. The channel
-opens at Holder: `get_account` says whether the account may use it (`canUseImageNext`, `qualities.imageNext`), so read
-it instead of probing.
+`generate_image` and `generate_video` run the Gen8 engines on their default channel; `get_account` names the engine
+behind each channel and what it takes (`platform.engines`, today **Gen8.1**):
 
-## Gen8.1 video
+- **Images**: up to **6** `refCreationIds` kept natively, legible text in the picture, long literal prompts honoured.
+- **Video**: clips **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
+  consistent), an optional `aspectRatio` and an optional **audio reference** (`upload_audio` an MP3, then pass its id
+  as `audioCreationId`, `audioUse: "music"` for a soundtrack or `"voice"` for a voice sample). Lengths are exact
+  seconds — 1, 5, 8, 10, 12, 15, 17 or 20, opened by tier; video opens at Explorer.
+- Presets and lengths depend on the tier: `get_account` lists what the account may submit and the best pick open to
+  it (`recommendation`), so read it instead of probing.
 
-`generate_video` with `videoModel: "next"` runs **Gen8.1 video**, 2DAI's next video engine: clips
-come out **with sound**, from a first frame plus up to 6 `refCreationIds` (characters, props and places kept
-consistent), with an optional `aspectRatio`. Every account with video gets `fast` quality and 1, 5, 8 or 10 s;
-Believer adds `normal`, Supporter `high`, and Founder every preset and 12, 15, 17 or 20 s — `get_account` always lists what the account
-may submit, so read it instead of guessing. Since 1.6.0 the clip can follow an **audio reference** too: `upload_audio`
-an MP3, then pass its id as `audioCreationId` (`audioUse: "music"` for a soundtrack, `"voice"` for a voice sample) —
-and TIXI writes the full scenario around it.
+`next` (`imageModel` / `videoModel`) is kept for the next engine. Until <date> it serves the same engine as the
+default channel; after that it answers `VIDEO_MODEL_UNAVAILABLE` / `IMAGE_MODEL_UNAVAILABLE`, uncharged, until an
+engine opens it. Leave both parameters unset, and reconnect the server in your host after updating (a running session
+keeps the old tool descriptions).
 
 ## New in 2.0 — reference tools on the Gen8 image engine
 
@@ -112,16 +112,16 @@ none). `upload_image` / `upload_audio` take `base64`. `GET /health` reports
 | Tool | What it does | Scope | Spends credit |
 |---|---|---|---|
 | `get_account` | Account status: credit, tier, key label/scopes/spend cap | read | no |
-| `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default); up to 3 `refCreationIds`, or Gen8.1 images with `imageModel: "next"` — 6 references, legible text (Holder+); `aspectRatio` sets the shape (phone = `9:16`, desktop = `16:9`, default `1:1`) | generate | **yes** |
+| `generate_image` | Text-to-image (style/quality default to auto; `enhance: true` runs the TIXI prompt enhancer, off by default); up to 6 `refCreationIds` kept natively, legible text; `aspectRatio` sets the shape (phone = `9:16`, desktop = `16:9`, default `1:1`) | generate | **yes** |
 | `generate_with_refs` | Image from references on the Gen8 image engine: `character-ref` (1–6 shots of one character, face photos lock the face), `style-transfer` (1–6 style sources), `smart-edit` (edit refs[0] per the prompt, up to 5 support refs) | generate | **yes** |
-| `generate_video` | Animate a still creation into a short clip (Video, or Gen8.1 video with sound via `videoModel: "next"`, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the scenario on a `raw` style — every other style already runs TIXI | generate | **yes** |
+| `generate_video` | Animate a still creation into a short clip with sound (first frame + up to 6 references, optional ratio, optionally scored by an `upload_audio` reference); `enhance: true` lets TIXI write the brief on a `raw` style — every other style already runs TIXI | generate | **yes** |
 | `generate_similar` | Re-run an existing creation ("more like this one") | generate | **yes** |
 | `generate_in_artistic_style` | Artist Painter: paint the prompt (and up to 6 subject refs) as a new work in a curated artistic style (`artisticStyleId` from `list_artistic_styles`, or `auto`) | generate | **yes** |
-| `generate_wallpaper` | Expand a creation into a landscape wallpaper dimension (`standard` 4:3, `photo` 3:2, `widescreen` 16:9, `ultrawide` 21:9; a phone wallpaper is a `9:16` `generate_image`); quality fixed at Ultra, price follows the dimension | generate | **yes** |
+| `generate_wallpaper` | Expand a creation into a landscape wallpaper dimension (`standard` 4:3, `photo` 3:2, `widescreen` 16:9, `ultrawide` 21:9; a phone wallpaper is a `9:16` `generate_image`); own engine, quality fixed at Ultra, price follows the dimension | generate | **yes** |
 | `check_generation` | Poll a queued generation by queueId | read | no |
 | `cancel_generation` | Cancel a still-waiting generation (charge refunded); explains itself when it is too late | generate | no |
 | `upload_image` | Upload a local image / base64 as a reference (hosted: base64 only) | generate | no |
-| `upload_audio` | Upload a local MP3 / base64 as the audio reference of a Gen8.1 video clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
+| `upload_audio` | Upload a local MP3 / base64 as the audio reference of a video clip (`audioCreationId` + `audioUse` on `generate_video`) | generate | no |
 | `download_creation` | Save the full-resolution asset to disk, or return an inline preview (hosted: inline preview + `downloadUrl`) | read | no |
 | `get_creation` | Fetch one creation row by id — same slim shape as `list_creations` rows. Opt-in path for the vision-derived caption when a generation reply gates it (NSFW ≥ Near-nude) | read | no |
 | `list_creations` | Page, search, sort and filter the library (folders, folder groups, trash, activity lenses, smart collections, shared folders, random pick; likes, type, aspect ratio, dates, NSFW block). Rows include `nsfwFlagged`/`nsfwRate` so agents can apply their own safeguards | read | no |
@@ -164,35 +164,39 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 ## Notes for agents
 
 - **Presets.** Image: `max` is the recommended everyday pick (best balance of detail and price); `ultimate` is the
-  highest resolution for final masters; `fast` / `normal` are for drafts. Video: `ultra` at **5 seconds** is the
-  recommended shot (best coherence for the price); `ultimate` is 1080p with the longest wait. `ultra` and
-  `ultimate` are tier-gated — `get_account` lists what the connected account may submit, so never probe presets.
-- **Shots, not long takes.** Clips run 5, 6 or 7 s at 18 fps native (`frameInterpolation: true` doubles the frame
-  rate to 36 fps for twice the price). Subject
-  identity holds for roughly the first 2.5–3.5 s: write the cut at ~3 s, one action per shot, several 5-second
-  shots rather than one long take.
-- **Gen8.1 images** (`generate_image` with `imageModel: "next"`, the new image engine) keep up to 6 `refCreationIds`
-  natively (3 on the default model), renders legible text and honours long literal prompts — describe the scene
-  plainly rather than in keyword lists. Same quality ids, priced on render time at about 1.1–1.9× the Gen 7.2 preset, and every reference adds a
-  surcharge on both models. Holder and up: `get_account` reports `canUseImageNext` and `qualities.imageNext`; a
-  submit below the gate is refused with the tier that opens it, uncharged. The other image tools stay on Gen 7.2.
-- **Gen8.1 video** (`videoModel: "next"`, the new video engine) renders clips **with sound** from a first frame plus
+  highest resolution for final masters; `fast` / `normal` are for drafts. Video: `high` at **5 seconds** is the
+  recommended shot; `ultimate` is the highest resolution with the longest wait. Every preset above `normal` (image)
+  or `fast` (video) is tier-gated — `get_account` lists what the connected account may submit and the best pick open
+  to it (`recommendation`), so never probe presets.
+- **Channels and engines.** `get_account` names the engine behind each image and video channel and what it takes
+  (`platform.engines`); `next` (`imageModel` / `videoModel`) is the channel kept for the next engine — leave it unset
+  unless `get_account` shows a distinct engine there. A closed channel is refused, uncharged.
+- **Lengths.** A clip runs at the length asked, in exact seconds: `get_account` lists the lengths the account may
+  submit (`videoDurations`, tier lock resolved); any other length is refused with `INVALID_DURATION`, uncharged.
+- **Images** keep up to 6 `refCreationIds`
+  natively, renders legible text and honours long literal prompts — describe the scene
+  plainly rather than in keyword lists. Same quality ids, priced on render time, and every reference adds a
+  surcharge. `get_account` reports the presets open to the account (`qualities`, `canUseImageNext` for the `next`
+  channel); a submit below a gate is refused with the tier that opens it, uncharged.
+- **Video** renders clips **with sound** at 24 fps from a first frame plus
   up to 6 `refCreationIds` (each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first frame's
   ratio) and an optional audio reference — an MP3 from `upload_audio` as `audioCreationId`, `audioUse: "music"`
   (soundtrack / sound design) or `"voice"` (a voice sample the speaking character follows); it counts as one more
-  reference. Lengths and presets depend on the account — `fast` quality and 1, 5, 8 or 10 s from Holder, `normal` from Believer, `high`
-  from Supporter, every preset and up to 20 s at Founder: `get_account` lists what the account may submit. Long clips render for several minutes:
+  reference. Lengths and presets depend on the account: `get_account` lists what it may submit. Long clips render for several minutes:
   expect a `queueId` and collect it with `check_generation`.
+- **Shots.** With `style: "raw"`, write the clip the way TIXI does: the first frame is
+  the opening shot (describe it as it is at 0 s, then the changes in order), about one shot per 1.7–2 s (5 s = 2–3,
+  8 s = 4, 10 s = 5, 20 s = 12; under 3 s one continuous shot), one camera idea and about one action per shot, each
+  subject anchored by its face, hair, garments and colours, and each sound written next to the action that makes it.
 - **Video styles and TIXI.** Every video style except `raw` (and `auto`) runs TIXI on the prompt: the style's
   guidance only exists through that rewrite, so it cannot be switched off. `style: "raw"` sends the prompt verbatim —
-  pass `enhance: true` to have TIXI write the motion scenario (Video) or the full Gen8.1 video brief (shots,
-  pictures, sound) from a short idea; a prompt starting with `tixi ` adds a thinking pass (the word is dropped from what TIXI
+  pass `enhance: true` to have TIXI write the clip's brief (shots, pictures and, on an engine with sound, the
+  sound) from a short idea; a prompt starting with `tixi ` adds a thinking pass (the word is dropped from what TIXI
   reads). No extra credit either way.
-- **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with interpolation.
-  Gen8.1 video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
+- **Price** — video is priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
   20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after
-  the first frame, the audio reference included; no interpolation. `auto` draws the
-  preset (video: `max` / `ultra` only, never `ultimate`), so pin it for a predictable cost; every submit returns the
+  the first frame, the audio reference included. `auto` draws the
+  preset within the account's tier, so pin it for a predictable cost; every submit returns the
   resolved `quality` next to `costUsd`.
 - **Batches.** `check_generation` takes `queueIds` (up to 25) to poll a whole batch of shots in one call.
 - **Prompts are never cut silently.** Listing rows shorten `prompt` / `description` with an ellipsis and a
@@ -214,14 +218,13 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
 
 ## The 2DAI stack
 
-We currently use our **Gen 7.2** model, and unlike others, we don't resell model
-access. All our models originate from the open-source community or our own R&D
-— we then disassemble, modify, fine-tune and optimize them to align with our
-legacy and **2DAI❤️ART** lines. They also run on our own private cloud network.
+2DAI runs its own models, and unlike others, we don't resell model access. All our
+models originate from the open-source community or our own R&D — we then
+disassemble, modify, fine-tune and optimize them to align with our legacy and
+**2DAI❤️ART** lines. They also run on our own private cloud network.
 
-The **Gen8** generation is rolling out as two engines behind the `next` channels: Gen8.1 video
-(`videoModel: "next"`, clips with sound) and Gen8.1 images (`imageModel: "next"`, 6 references). Same rule, same
-cloud; `get_account.modelChannels` names the engine behind each channel.
+`get_account` names the engine behind each channel (`platform.engines`, `modelLabels`); the `next` channels are
+kept for the next engine.
 
 Every tool response carries the model version and stack summary (via
 `get_account.platform`), so an agent can hand these facts back to a user who

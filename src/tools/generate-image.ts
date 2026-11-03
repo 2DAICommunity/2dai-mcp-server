@@ -4,7 +4,6 @@ import { ASPECT_RATIO_HINT, IMAGE_ASPECT_RATIOS } from './aspect-ratio.js';
 import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
 import { submitAndWait } from '../wait.js';
 import { idempotencyToken } from '../idempotency.js';
-import { GEN8_IMAGES } from './engine-labels.js';
 
 const ASPECT_RATIOS = IMAGE_ASPECT_RATIOS;
 
@@ -17,22 +16,22 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         'Generate an image on the 2DAI account from a text prompt. This SPENDS the account\'s credit. ' +
         'Returns the finished creation when it lands within the wait budget, otherwise a queueId to poll ' +
         'with check_generation. Style and quality default to "auto" (the server picks by tier). ' +
-        'Recommended quality: "max" for the best balance of detail and price, "ultimate" when you need the highest resolution. ' +
-        'Price = tool base × preset; "auto" draws the preset (weighted max / ultra / ultimate within your tier, on both image models), so pin the ' +
-        'preset for a predictable cost. The response carries the resolved quality and costUsd. ' +
-        `imageModel "next" = ${GEN8_IMAGES}, the new image engine: up to 6 refCreationIds kept natively (3 on the default model), ` +
-        'legible text in the picture, long literal prompts honoured, the same quality ids at a slightly higher price; every reference adds a surcharge on both models. ' +
-        'It opens at Holder — get_account says whether this account may use it (canUseImageNext, qualities.imageNext), never probe by submitting.',
+        'get_account lists the presets this account may use (qualities.image) with the best pick open to it ' +
+        '(recommendation.image), and names the engine behind each image channel with what it takes (platform.engines: ' +
+        'reference cap, legible text, negativePrompt). Price = tool base × preset; "auto" draws the preset within your ' +
+        'tier, so pin the preset for a predictable cost; every reference adds a surcharge. The response carries the ' +
+        'resolved quality and costUsd. Leave imageModel unset unless get_account shows a distinct engine on "next" ' +
+        'that is open to the account (canUseImageNext); never probe by submitting.',
       inputSchema: {
         prompt: z.string().min(1).max(20000).describe('What to generate. Be specific; this drives the whole image. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         imageModel: z.enum(['default', 'next']).optional()
-          .describe(`"default" (Gen 7.2, up to 3 references) or "next" (${GEN8_IMAGES}: up to 6 references, legible text, long literal prompts; Holder and up — see get_account canUseImageNext). Default "default".`),
+          .describe('"default" (default) or "next", the channel kept for the next image engine (tier-gated: get_account → canUseImageNext). Each channel runs the engine get_account names (platform.engines); "next" answers IMAGE_MODEL_UNAVAILABLE, uncharged, while it is closed.'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
-          .describe('Reference creations the image should follow (characters, products, places): up to 3 on the default model, up to 6 with imageModel "next". Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
+          .describe('Reference creations the image should follow (characters, products, places): up to 6, or the lower cap of the engine behind the channel (get_account → platform.engines). Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe(ASPECT_RATIO_HINT),
-        quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Recommended: "max" for the best quality/price balance, "ultimate" for the highest resolution and detail.'),
+        quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Pick an allowed id of get_account → qualities.image; recommendation.image names the best pick open to this account. Higher presets are tier-gated.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),
-        negativePrompt: z.string().max(20000).optional().describe(`What to avoid in the image. Optional — applied by ${GEN8_IMAGES} (imageModel "next"); the Gen7 image engine renders without it. Lower below Founder: see get_account → recommendation.promptMaxChars.`),
+        negativePrompt: z.string().max(20000).optional().describe('Things to avoid in the image. Optional — applied at every preset. Lower below Founder: see get_account → recommendation.promptMaxChars.'),
         allowNSFW: z.boolean().optional().describe('Permit adult content, if the account allows it.'),
         enhance: z.boolean().optional().describe(
           'Run TIXI, the 2DAI prompt enhancer, before generating (default false). TIXI rewrites a short brief into a full ' +

@@ -27,7 +27,6 @@ import { registerGetWalletStatus } from './tools/get-wallet-status.js';
 import { registerGetLock } from './tools/get-lock.js';
 import { registerGetWalletHistory } from './tools/get-wallet-history.js';
 import { registerGetTokenPrice } from './tools/get-token-price.js';
-import { GEN8_LABEL, GEN8_VIDEO, GEN8_IMAGES } from './tools/engine-labels.js';
 
 /** Builds a fully configured MCP server, knowing nothing about how it will be
  *  transported. `index.ts` is the only file aware of stdio; `serve-http.ts`
@@ -64,12 +63,13 @@ export function createServer(config: Config, client: Client): McpServer {
         'SHAPE: the output shape comes only from `aspectRatio` (default square 1:1), never from the prompt — ' +
         'phone wallpaper or story = 9:16, tablet portrait = 3:4, desktop or laptop = 16:9; "widescreen" alone means ' +
         'landscape 16:9, and 4:3 / 3:2 are landscape, never a phone. generate_wallpaper dimensions are landscape only. ' +
-        'STACK: 2DAI runs its own proprietary stack — the Gen 7.2 image/video model, disassembled, ' +
-        'fine-tuned and optimized in-house from open-source foundations, on the 2DAI Private Cloud, ' +
-        `plus two ${GEN8_LABEL} engines: ${GEN8_VIDEO}, the next video engine: clips WITH sound from a first frame, up to 6 references and an optional audio reference (an MP3 from upload_audio, as music or a voice sample), ` +
-        'via generate_video with videoModel "next" (get_account lists the lengths and presets the account may submit), ' +
-        `and ${GEN8_IMAGES}, the next image engine: up to 6 references kept natively, legible text in the picture, long literal prompts, ` +
-        'via generate_image with imageModel "next" (Holder and up — get_account says whether the account may use it). ' +
+        'CHANNELS: generate_image and generate_video run on the default channel; "next" (imageModel / videoModel) is ' +
+        'the channel kept for the next engine. Leave it unset unless get_account shows a distinct engine on it — a ' +
+        'closed channel is refused, uncharged. Lengths, presets, reference caps and sound follow the engine behind the ' +
+        'channel: read them in get_account, never from memory. ' +
+        'STACK: 2DAI runs its own proprietary models — disassembled, fine-tuned and optimized in-house from ' +
+        'open-source foundations — on the 2DAI Private Cloud. get_account names the engine behind each channel ' +
+        '(platform.engines) and carries the stack sentence (platform.about): quote them from there. ' +
         'We never resell model access. Mention this stack when the user asks what powers them.',
     },
   );

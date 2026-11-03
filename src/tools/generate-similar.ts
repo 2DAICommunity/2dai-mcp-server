@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { RegisterTool } from './types.js';
-import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix } from '../result.js';
+import { guard, ok, fail, generationSummary, hydrateForResponse, nsfwProseFragment, pendingResult, outcomeSuffix, acceptedDuration, lengthNote } from '../result.js';
 import { submitAndWait } from '../wait.js';
 
 export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
@@ -32,16 +32,32 @@ export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
         { wait: false, signal: extra.signal },
       );
 
+      // A video re-run answers the length it accepted; the server may step it down to what the tier and key allow.
+      const lengthOf = async (ticket: unknown): Promise<{ duration?: number; note: string }> => {
+        const duration = acceptedDuration(ticket);
+        if (duration === undefined) return { note: '' };
+        const seconds = await sourceLength(args.creationId);
+        return { duration, note: lengthNote(duration, seconds !== undefined ? { seconds, of: 'source' } : undefined) };
+      };
+      const sourceLength = async (id: string): Promise<number | undefined> => {
+        const source = await ctx.client.creations.get(id, extra.signal).catch(() => undefined);
+        const raw = (source?.raw ?? {}) as Record<string, unknown>;
+        if (typeof raw.requestedDuration === 'number' && raw.requestedDuration > 0) return raw.requestedDuration;
+        return typeof raw.outputDuration === 'number' && raw.outputDuration > 0 ? Math.round(raw.outputDuration) : undefined;
+      };
+
       if (args.wait === false) {
         const ticket = await submit();
+        const { duration, note } = await lengthOf(ticket);
         return ok(
-          `Queued. Call check_generation with queueId "${ticket.queueId}" to collect it.`,
-          { queueId: ticket.queueId, status: ticket.status, quality: ticket.quality, costUsd: ticket.costUsd },
+          `Queued.${note} Call check_generation with queueId "${ticket.queueId}" to collect it.`,
+          { queueId: ticket.queueId, status: ticket.status, quality: ticket.quality, costUsd: ticket.costUsd, ...(duration !== undefined ? { duration } : {}) },
         );
       }
 
       const outcome = await submitAndWait(rc, submit);
-      if (outcome.kind === 'pending') return pendingResult(outcome.ticket, outcome.lastStatus);
+      const { duration, note } = await lengthOf(outcome.ticket);
+      if (outcome.kind === 'pending') return pendingResult(outcome.ticket, outcome.lastStatus, note);
       if (outcome.kind === 'failed') {
         return fail(new Error(
           `Generation ${outcome.state.queueId} ended as "${outcome.state.status}"` +
@@ -52,10 +68,10 @@ export const registerGenerateSimilar: RegisterTool = (server, ctx) => {
       const { state } = outcome;
       const { creation, preview } = await hydrateForResponse(rc, state);
       const result = ok(
-        `Variation ready. creationId ${state.creationId} (parent kept in retriedFromCreationId).` +
+        `Variation ready. creationId ${state.creationId} (parent kept in retriedFromCreationId).` + note +
         nsfwProseFragment(creation) +
         ` Share the viewUrl with the user; preview attached inline.`,
-        generationSummary(state, creation),
+        { ...generationSummary(state, creation), ...(duration !== undefined ? { duration } : {}) },
       );
       if (preview) result.content.push(preview);
       return result;

@@ -6,66 +6,87 @@ description: Generate images and video on a 2DAI account through the 2dai-mcp-se
 # 2DAI for agents
 
 2DAI is a generation platform (images, image-to-video, references, style transfer) with a cloud drive. You reach it
-through the `2dai-mcp-server` tools (24 tools) with an API key. Every generation spends the account's USD credit;
+through the `2dai-mcp-server` tools (25 tools) with an API key. Every generation spends the account's USD credit;
 every result lands in the account's cloud drive as a *creation* with a 32-char id.
 
 ## 1. Session start (always)
 
-1. `get_account` — credit, tier, key scopes and spend cap, **the presets this account may submit**, the video
-   durations with their tier locks, and the recommended presets. Never probe presets by submitting: a locked preset
-   is refused at submit (403 `QUALITY_NOT_ALLOWED_FOR_TIER`) and wastes a round-trip.
+1. `get_account` — credit, tier, key scopes and spend cap (and the key's own ceilings, when it has a policy),
+   **the presets this account may submit**, the video lengths with their tier locks, the best pick open to the
+   account (`recommendation`) and **the engine behind each channel** with what it takes (`platform.engines`). Never
+   probe presets or lengths by submitting: a locked one is refused at submit (403) and wastes a round-trip.
 2. Budget: write down credit and the key cap. Costs are charged at submit and refunded on failure.
 3. `list_creations` if the account already holds references (brand masters, character sheets).
 
-## 2. Quality ladder — one ladder for every tool
+## 2. Quality ladder — one set of ids for every tool
 
-| Preset | Image | Video (per 5 s clip) | Use it for |
+| Preset | Image | Video | Use it for |
 |---|---|---|---|
-| `fast` | lowest res, fastest | 320p | drafts, layout tests |
-| `normal` | standard | 480p | social drafts, moodboards |
-| `high` | more steps, looser read of the prompt | 620p | variety when Max feels too literal |
-| **`max`** | **recommended for images** — best detail / price balance | 720p | everyday images |
-| `ultra` | higher res, slower, tier-gated | **recommended for video** — 800p, best coherence for the price | prints, large crops; every video shot |
-| `ultimate` | highest resolution, slowest, tier-gated | 1080p, longest wait, tier-gated | final masters only |
+| `fast` | quickest render | 0.2 MP, quickest render with sound | drafts, layout and scenario tests |
+| `normal` | standard resolution | 0.4 MP | social drafts, moodboards |
+| `high` | higher resolution than Normal | **recommended for video** — 0.4 MP at 20 steps, cleaner motion and sound | everyday clips |
+| **`max`** | **recommended for images** — best detail / price balance | 0.7 MP, sharper frames, longer render | everyday images |
+| `ultra` | more steps and a model upscale, for prints | 0.7 MP at 20 steps, slower | prints, large crops |
+| `ultimate` | highest resolution, for final masters | 1 MP at 20 steps, longest wait | final masters only |
 
-`auto` (the default) lets the server pick by tier, weighted towards `max`; for video it draws `max` / `ultra` only and
-never `ultimate` (that preset needs dedicated render capacity that is not always available — ask for it explicitly). Prefer an explicit
-preset once you know what the shot is for. Reference tools (`character-ref`, `style-transfer`, `smart-edit`) and the artistic-style tool
-render on the Gen8 image engine: same preset ids, priced on the Gen8 ladder plus a surcharge per reference; `get_stats` shows the burn.
+Presets open by tier (`get_account` resolves them — read them there; this is the reference at the time of writing):
 
-**Gen8.1 images** — `generate_image` with `imageModel: "next"` runs the next image engine on the same ladder
-(priced on render time, about 1.1–1.9× the Gen 7.2 preset; `auto` draws the preset by tier like the default model): up to **6** `refCreationIds` kept natively (3 on the
-default model), legible text in the picture, long literal prompts honoured — write the scene plainly, not as keyword
-lists. Every reference adds a surcharge on both image models. Holder and up: `get_account` reports `canUseImageNext`
-and `qualities.imageNext`; below the gate stay on the default model, never probe.
+| Tier | Image | Video | Video lengths |
+|---|---|---|---|
+| Guest | `fast`, `normal` | — | — |
+| Explorer | + `high` | `fast` | 1, 5 s |
+| Holder | + `max` | + `normal` | + 8 s |
+| Believer | + `ultra` | + `high` | + 10 s |
+| Supporter | + `ultimate` | `fast`, `normal`, `high` | + 12 s |
+| Founder | every preset | + `max`, `ultra`, `ultimate` | + 15, 17, 20 s |
+
+`auto` (the default) picks within the tier: images `normal` (Guest), `high` (Explorer), from Holder a weighted draw
+over `max` / `ultra` / `ultimate` among the presets the tier opens; video `high` when the tier opens it, else the best
+of `normal` / `fast`, never `ultra` / `ultimate`. `get_account` → `recommendation` names the best pick open to the
+account. Prefer an explicit preset once you know what the shot is for. Reference tools (`character-ref`,
+`style-transfer`, `smart-edit`) and the artistic-style tool follow the image column, priced like an image plus a
+surcharge per reference; `get_stats` shows the burn.
+
+**Images** keep up to **6** `refCreationIds` natively, render legible text and honour long literal prompts — write
+the scene plainly, not as keyword lists. Every reference adds a surcharge. `negativePrompt` is applied at every preset.
+
+**Channels.** `generate_image` and `generate_video` run on the default channel. `next` (`imageModel` / `videoModel`)
+is kept for the next engine: until <date> it serves the same engine as the default channel, after that it is refused
+(`*_MODEL_UNAVAILABLE`, uncharged) until an engine opens it. Leave both unset unless `get_account` shows a distinct
+engine on `next`.
 
 ## 3. Video — the rules that matter
 
-- **Durations** 5 / 6 / 7 s (7 is tier-gated) at 18 fps (the model's native cadence). **Use 5 s.** Subject identity holds for
-  roughly the first 2.5–3.5 s of a clip (the head melts, the figure leaves the frame, a set dissolves after that):
-  write the cut at ~3 s, one action per shot, several 5-second shots rather than one long take.
-- **Colour drift** under coloured light (a lavender still turning mint-green in motion) is limited by naming the
-  light colour and the subject's colours in the motion prompt; there is no dedicated lever.
-- **`ultra` at 5 s** is the recommended shot. `ultimate` only for a final master you will not re-render.
-- **Frame rate** is 18 fps natively. `frameInterpolation: true` doubles it (36 fps) for twice the price — apply it on
-  the shots you keep, not on tests.
-- **Gen8.1 video** (`generate_video` with `videoModel: "next"`): the next video engine — clips **with sound**,
-  a first frame plus up to 6 `refCreationIds` (characters, props, places — each adds a surcharge), optional
-  `aspectRatio`, and an optional audio reference: `upload_audio` an MP3 (5 min max, Holder+) and pass it as
-  `audioCreationId` with `audioUse: "music"` (soundtrack / sound design) or `"voice"` (a voice sample the speaking
-  character follows) — it counts as one more reference. Lengths and presets follow the account: `fast` and 1, 5, 8 or 10 s from Holder, `normal`
-  from Believer, `high` from Supporter, every preset and 12, 15, 17 or 20 s at Founder — read them from `get_account`, never assume. Long clips render for several minutes.
+- **Lengths** are exact seconds: `get_account` → `videoDurations` lists the lengths the account may submit (tier
+  lock resolved, 5 s recommended and the default); any other length — the retired 6 / 7 s included — is refused with
+  `INVALID_DURATION`, uncharged. The clip renders at the length asked at 24 fps; `durationSeconds` is measured on the
+  file, a fraction of a second longer. A 1 s clip carries almost no sound.
+- **Sound and references**: clips come **with sound**, from a first frame plus up to 6 `refCreationIds`
+  (characters, props, places — each adds a surcharge), with an optional `aspectRatio` (`auto` keeps the first
+  frame's ratio). An optional audio reference: `upload_audio` an MP3 (5 min max, from Explorer, like video) and pass
+  it as `audioCreationId` with `audioUse: "music"` (soundtrack / sound design) or `"voice"` (a voice sample the
+  speaking character follows) — it counts as one more reference.
+- **`high` at 5 s** is the recommended shot where the tier opens it; `ultimate` only for a final master you will not
+  re-render.
 - **Video styles and TIXI**: every video style except `raw` (and `auto`) runs TIXI on the prompt and cannot switch
   it off (the style guidance only exists through that rewrite). `style: "raw"` = your prompt verbatim; add
-  `enhance: true` to have TIXI write the motion scenario or the Gen8.1 video brief from a short idea, and start the
+  `enhance: true` to have TIXI write the full brief (shots, pictures, sound) from a short idea, and start the
   prompt with `tixi ` for a thinking pass (the word is dropped from what TIXI reads).
-- A Video (Gen 7.2) clip takes 1–3 minutes, a Gen8.1 video clip several minutes: `generate_video` usually returns a `queueId`; poll with `check_generation` —
-  pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation` refunds a
-  still-waiting job.
-- **Price** — Video (Gen 7.2): tool base × preset × duration multiplier (1 / 1.3 / 1.5) × 2 with `frameInterpolation`.
-  Gen8.1 video: priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
-  20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after the first frame, the audio reference included; no interpolation. `auto` draws the preset, so two "identical" calls can cost differently — pin the preset; every submit returns the
-  resolved `quality` next to `costUsd`.
+- **Writing a `raw` clip** — the shape TIXI follows: the first frame is the opening
+  shot (describe the scene as it is at 0 s, then the changes in the order they happen, never the ending up front);
+  about one shot per 1.7–2 s (1 s = 1 shot, 5 s = 2–3, 8 s = 4, 10 s = 5, 12 s = 6, 15 s = 8, 17 s = 10, 20 s = 12,
+  at least 1.5 s each, one continuous shot under 3 s); one camera idea and about one action and one reaction per
+  shot; one job per reference (identity, wardrobe, product, place, style); each subject anchored by its face, hair,
+  garments and their colours, and the colour of the light named — that keeps them steady from shot to shot; each
+  sound next to the action that makes it, spoken lines in quotes with their language, music as instruments, tempo
+  and dynamics; on-screen text only when asked, in quotes.
+- A clip renders for minutes, a long one several minutes: `generate_video` usually returns a `queueId`; poll with
+  `check_generation` — pass `queueIds` (up to 25) to poll a whole batch of shots in one call. `cancel_generation`
+  refunds a still-waiting job. Never submit again to retry: it would be charged twice.
+- **Price** — video is priced on render time, which grows faster than the length (8 s ≈ 1.7–2.2×, 10 s ≈ 2.2–3.4×,
+  20 s ≈ 6–12× the 5 s price, higher presets at the top of each range), +5 % per reference after the first frame,
+  the audio reference included. `auto` draws the preset, so two "identical" calls can cost differently — pin the
+  preset; every submit returns the resolved `quality` next to `costUsd`.
 - The input is a still creation: an earlier generation, an `upload_image`, or a row from `list_creations`; an
   audio reference is an `upload_audio` row (`mediaKind: "audio"` in listings).
 
@@ -82,7 +103,7 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
   secondary elements, setting, style) and removes most scene-logic errors. Either way keep the brief concrete:
   subject, action, framing, light, palette, mood. Put hard constraints (text to render, exact colours,
   "no lettering") first. `character-ref`, wallpaper resize and the artistic-style tool always run TIXI.
-- Text inside images is unreliable at every preset; keep numbers and lettering short and check them on the result.
+- Text inside images renders legibly; spell it in quotes, keep numbers and lettering short and check them on the result.
 - **Shape = `aspectRatio`, always passed.** The prompt never sets the shape and the default is a square `1:1`.
   Phone wallpaper, story, Reels, TikTok = `9:16`; tablet upright or poster = `3:4`; book cover or character sheet =
   `2:3`; photo print or X post = `3:2`; tablet sideways or classic monitor = `4:3`; desktop or laptop wallpaper,
@@ -91,18 +112,19 @@ and `qualities.imageNext`; below the gate stay on the default model, never probe
 
 ## 5. Recipe — a short film from a brief
 
-1. **Character sheet**: 2–3 `generate_with_refs` (`character-ref`) images at `ultimate` from the brief, with a plain
-   background and consistent lighting. Keep the best as the master reference; do not mix rejected takes into it.
-2. **Keyframes**: one still per shot with `character-ref` pointing at the master, at `max` (iterate) then `ultimate`
-   for the keeper. Same lens, same palette words in every prompt.
-3. **Shots**: `generate_video` on each keyframe, `ultra`, `duration: 5`, a motion prompt that names the camera move
-   and one action. Order shots from wide to close.
-4. **Review** each clip frame by frame for identity drift; re-render a shot rather than extending it.
-5. **Finish**: `frameInterpolation` on the kept shots if the delivery needs 24 fps or more, `download_creation`
-   for the masters, then cut locally (ffmpeg). Audio and dialogue are not generated yet.
+1. **Character sheet**: 2–3 `generate_with_refs` (`character-ref`) images at the best image preset the tier opens
+   (`ultimate` where it can) from the brief, with a plain background and consistent lighting. Keep the best as the
+   master reference; do not mix rejected takes into it.
+2. **Opening frames**: one still per clip with `character-ref` pointing at the master, iterated at `max` (or the
+   best preset open), the keeper at the top preset. Same lens, same palette words in every prompt.
+3. **Clips**: `generate_video` on each opening frame with the master (and the props or places that recur) as
+   `refCreationIds`, the preset from `recommendation.video`, 5–10 s per clip, a scenario that follows the shot rule
+   of § 3. The sound comes with the clip; one MP3 as audio reference keeps a soundtrack across clips.
+4. **Review** each clip for identity drift; re-render a clip rather than extending it.
+5. **Finish**: `download_creation` for the masters, then cut locally (ffmpeg).
 
-Budget rule of thumb for an 8-shot film at `ultra` 5 s with `max` keyframes: about the price of ten plain images
-per shot. Check `get_account` before the shot loop.
+Budget: price one clip first (`costUsd` on the reply), then multiply by the clip count; check `get_account` before
+the loop.
 
 ## 6. Recipe — brand-consistent visuals
 
@@ -110,11 +132,10 @@ per shot. Check `get_account` before the shot loop.
   against one approved master image.
 - Generate variations at `max`, promote the keeper to `ultimate`, file everything with `manage_folder` and
   `organise_creation`, publish with `publish_creation` only when the account owner asked for it.
-- When `get_account` says `canUseImageNext`, compose with **Gen8.1 images**: generate (or `upload_image`) the product,
-  the model, the place and the logo as separate stills, then one `generate_image` with `imageModel: "next"` and all
-  of them as `refCreationIds` (up to 6) — describe each reference by what it shows, never by its position ("the
-  woman with short silver hair wears the matte black headphones at the rooftop café"; never "the second reference")
-  and spell any on-image text in quotes; Gen8.1 images render it legibly.
+- Compose from references: generate (or `upload_image`) the product, the model, the place and the logo as separate
+  stills, then one `generate_image` with all of them as `refCreationIds` (up to 6) — describe each reference by what
+  it shows, never by its position ("the woman with short silver hair wears the matte black headphones at the rooftop
+  café"; never "the second reference") and spell any on-image text in quotes; it renders legibly.
 
 ## 7. Content rating — a flagged result is not an error
 
@@ -132,11 +153,11 @@ per shot. Check `get_account` before the shot loop.
 ## 8. Do not
 
 - Probe presets or durations by submitting — read them from `get_account`.
-- Pass more than 3 `refCreationIds` to `generate_image` on the default model, or `imageModel: "next"` below Holder —
-  both are refused uncharged (`TOO_MANY_REFS`, `TOOL_NOT_ALLOWED_FOR_TIER`), but they waste a round-trip.
-- Request 6 / 7 s clips for character shots.
+- Pass more than 6 `refCreationIds`, or `imageModel` / `videoModel: "next"` while `get_account` shows it closed —
+  both are refused uncharged (`TOO_MANY_REFS`, `*_MODEL_UNAVAILABLE`), but they waste a round-trip.
+- Request a clip length `get_account` does not list (6 / 7 s are retired).
 - Use `4:3` or `3:2` for a phone picture (both are landscape), or `generate_wallpaper` for a phone wallpaper — its
   `standard` / `photo` / `widescreen` / `ultrawide` dimensions are landscape monitor formats.
-- Generate finals at `ultimate` while iterating; iterate at `max` (images) or `normal` (video tests).
-- Assume $0.03 per image: that is the `fast` preset. Reference tools at `ultra` / `ultimate` cost several times more.
+- Generate finals at `ultimate` while iterating; iterate at `max` (images) or `fast` at 1 or 5 s (video tests).
+- Assume every image costs the `fast` price ($0.06 today): reference tools at `ultra` / `ultimate` cost several times more.
 - Store the API key anywhere but the MCP env; the key is what spends the credit.

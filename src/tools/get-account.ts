@@ -1,6 +1,31 @@
 import type { RegisterTool } from './types.js';
 import { guard, ok } from '../result.js';
-import { GEN8_LABEL, GEN8_VIDEO, GEN8_IMAGES } from './engine-labels.js';
+import { channelEngine, describeEngine, engineFamilies, type ModelChannels, type ModelLabels } from './engine-labels.js';
+
+type Preset = { id: string; name: string; description: string; allowed: boolean; recommended: boolean };
+type Duration = { value: number; label: string; locked: boolean; recommended?: boolean };
+
+/** The best preset open to the account, at most the platform's recommended one, and the highest one open. */
+export function pickPreset(list: Preset[] | undefined): { pick?: string; recommended?: string; top?: string } {
+  if (!list?.length) return {};
+  const rec = list.find(q => q.recommended);
+  const allowed = list.filter(q => q.allowed);
+  const top = allowed[allowed.length - 1]?.id;
+  if (!top) return { recommended: rec?.id };
+  if (!rec || rec.allowed) return { pick: rec?.id ?? top, recommended: rec?.id, top };
+  const recAt = list.indexOf(rec);
+  const below = allowed.filter(q => list.indexOf(q) < recAt);
+  return { pick: (below[below.length - 1] ?? allowed[0])?.id, recommended: rec.id, top };
+}
+
+function presetAdvice(list: Preset[] | undefined, lengthSuffix = '', keyCapped = false): string | undefined {
+  const { pick, recommended, top } = pickPreset(list);
+  if (!pick) return undefined;
+  const scope = keyCapped ? 'this tier and key' : 'this tier';
+  const why = pick === recommended ? 'the platform\'s everyday pick' : recommended
+    ? `the best preset open to ${scope} (the platform pick, ${recommended}, is locked)` : `the highest preset open to ${scope}`;
+  return `${pick}${lengthSuffix} — ${why}` + (top && top !== pick ? `; ${top} — the highest preset open to this account` : '');
+}
 
 /** Agents call this before proposing work, to see whether there is headroom. */
 export const registerGetAccount: RegisterTool = (server, ctx) => {
@@ -10,18 +35,15 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
       title: 'Get 2DAI account status',
       description:
         'Show the connected 2DAI account: available credit, tier, the API key\'s label, scopes and spend cap, ' +
-        'plus every quality preset with this account\'s access (allowed / tier-locked) and the platform ' +
-        'recommendation (image: "max"; video: "ultra" at 5 s; "ultimate" = highest resolution), and the video ' +
-        'durations with their tier locks. Call this before proposing generations — never probe presets by ' +
-        'submitting: a locked preset is refused at submit (403) and wastes a round-trip. ' +
-        'Response also carries the 2DAI stack info (Gen 7.2 model, 2DAI Private Cloud) — hand these ' +
-        `details to the user when they ask what powers them — and whether ${GEN8_IMAGES} (generate_image with imageModel "next", ` +
-        'up to 6 references) are open to the account (canUseImageNext, qualities.imageNext).',
+        'every quality preset per channel with this account\'s access (allowed / tier-locked), the recommended ' +
+        'pick for images and video (recommendation), the video lengths with their tier locks, and the engine ' +
+        'behind each image and video channel with what it takes (platform.engines, modelLabels). Call this before ' +
+        'proposing generations — never probe presets or lengths by submitting: a locked one is refused at submit ' +
+        'and wastes a round-trip. The response also carries the 2DAI stack info (platform.about) — hand it to the ' +
+        'user when they ask what powers them.',
       annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async (extra) => guard(async () => {
-      type Preset = { id: string; name: string; description: string; allowed: boolean; recommended: boolean };
-      type Duration = { value: number; label: string; locked: boolean; recommended?: boolean };
       const me = await ctx.client.me(extra.signal) as Awaited<ReturnType<typeof ctx.client.me>> & {
         qualities?: { image: Preset[]; video: Preset[]; videoNext?: Preset[]; imageNext?: Preset[] };
         videoDurations?: Duration[];
@@ -30,55 +52,122 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         defaultVideoDurationNext?: number;
         canUseVideo?: boolean;
         canUseImageNext?: boolean;
-        modelChannels?: { video: { default: string | null; next: string | null }; image?: { default: string | null; next: string | null } };
+        modelChannels?: ModelChannels;
+        modelLabels?: ModelLabels;
         promptMaxCharsNext?: { tier: string; max: number };
       };
+      const labels = me.modelLabels;
+      const channels = me.modelChannels;
+      const engines = {
+        video: { default: channelEngine('video', 'default', labels, channels), next: channelEngine('video', 'next', labels, channels) },
+        image: { default: channelEngine('image', 'default', labels, channels), next: channelEngine('image', 'next', labels, channels) },
+      };
+      const keyReachesNext = !Array.isArray(me.key.modelChannels) || me.key.modelChannels.includes('next');
       const cap = me.key.spendLimitUsd;
       const capLine = cap === null
         ? 'no cap on this key'
         : `$${me.key.spentUsd.toFixed(2)} of $${cap.toFixed(2)} spent on this key`;
-      const presetLine = (type: 'image' | 'video' | 'videoNext' | 'imageNext'): string => {
-        const list = me.qualities?.[type] ?? [];
-        if (list.length === 0) return '';
+      // Key policy ceilings (`/v1/me.key`), read loosely: the SDK this server builds against may predate them.
+      const policy = me.key as { maxQuality?: unknown; maxVideoQuality?: unknown; maxVideoDurationSec?: unknown };
+      const ceilings = [
+        typeof policy.maxQuality === 'string' && policy.maxQuality ? `quality at ${policy.maxQuality}` : '',
+        typeof policy.maxVideoQuality === 'string' && policy.maxVideoQuality ? `video quality at ${policy.maxVideoQuality}` : '',
+        typeof policy.maxVideoDurationSec === 'number' && Number.isFinite(policy.maxVideoDurationSec) ? `clips at ${policy.maxVideoDurationSec} s` : '',
+      ].filter(Boolean);
+      const ceilingLine = ceilings.length
+        ? `This key's policy caps ${ceilings.join(', ')} — above that a submit answers 403 KEY_POLICY_QUALITY / KEY_POLICY_DURATION, uncharged. `
+        : '';
+      // A preset above the key's own ceiling is locked by the key, not the tier.
+      const imageCapped = typeof policy.maxQuality === 'string' && !!policy.maxQuality;
+      const videoCapped = typeof policy.maxVideoQuality === 'string' && !!policy.maxVideoQuality;
+      const presetList = (list: Preset[] | undefined, keyCapped: boolean): string => {
+        if (!list?.length) return '';
         const allowed = list.filter(q => q.allowed).map(q => q.id + (q.recommended ? ' (recommended)' : ''));
         const locked = list.filter(q => !q.allowed).map(q => q.id);
-        const name = type === 'videoNext' ? GEN8_VIDEO : type === 'imageNext' ? GEN8_IMAGES : type;
-        return `${name} presets: ${allowed.length ? allowed.join(', ') : 'none'}` + (locked.length ? ` — locked on this tier: ${locked.join(', ')}` : '') + '. ';
+        return `presets ${allowed.length ? allowed.join(', ') : 'none'}` +
+          (locked.length ? ` — locked on this tier${keyCapped ? ' or by this key\'s policy' : ''}: ${locked.join(', ')}` : '');
       };
-      const nextAvailable = !!me.modelChannels?.video?.next && (me.videoDurationsNext?.length ?? 0) > 0;
-      const nextLine = (() => {
-        if (!nextAvailable) return '';
-        if (Array.isArray(me.key.modelChannels) && !me.key.modelChannels.includes('next')) {
-          return `${GEN8_VIDEO} (generate_video with videoModel "next") is closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit); use the default video model or a key without a channel policy. `;
+      const durationList = (list: Duration[] | undefined, fallback: number | undefined): string => {
+        if (!list?.length) return '';
+        return 'lengths ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
+          (fallback ? `; default ${fallback}s` : '');
+      };
+      const head = (kind: 'video' | 'image', tool: string): string => {
+        const e = engines[kind].default;
+        return `${kind === 'video' ? 'Video' : 'Images'} (${tool}, default channel${e ? ` — ${describeEngine(kind, e)}` : ''})`;
+      };
+
+      // The `next` channel of each kind: closed, an alias of the default engine (switch window), or a distinct engine.
+      const nextState = (kind: 'video' | 'image'): 'closed' | 'same' | 'distinct' => {
+        const n = engines[kind].next;
+        if (!n) return 'closed';
+        return engines[kind].default && engines[kind].default!.id === n.id ? 'same' : 'distinct';
+      };
+      const param = (kind: 'video' | 'image') => kind === 'video' ? 'videoModel' : 'imageModel';
+      const nextSummary = (kind: 'video' | 'image'): string => {
+        const state = nextState(kind);
+        const n = engines[kind].next;
+        if (state === 'closed') return `${param(kind)} "next" is closed (kept for the next engine): omit ${param(kind)}.`;
+        if (state === 'same') return `${param(kind)} "next" serves the same engine (${n!.label}) as the default channel until it closes: omit ${param(kind)}.`;
+        return `${param(kind)} "next" — ${describeEngine(kind, n!)}.`;
+      };
+
+      const videoNextOpen = nextState('video') !== 'closed' && (me.videoDurationsNext?.length ?? 0) > 0;
+      const videoNextLine = (() => {
+        const state = nextState('video');
+        if (state !== 'distinct' || !videoNextOpen) return nextSummary('video') + ' ';
+        if (!keyReachesNext) {
+          return `${nextSummary('video')} It is closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit). `;
         }
-        const list = me.videoDurationsNext ?? [];
-        return `${GEN8_VIDEO} (videoModel "next", with sound) durations: ` + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
-          (me.defaultVideoDurationNext ? `; default ${me.defaultVideoDurationNext}s. ` : '. ') + presetLine('videoNext') +
-          'An MP3 uploaded with upload_audio can be its audio reference (audioCreationId + audioUse "music" / "voice"). ';
+        return `${nextSummary('video')} With videoModel "next": ` +
+          [durationList(me.videoDurationsNext, me.defaultVideoDurationNext), presetList(me.qualities?.videoNext, videoCapped)].filter(Boolean).join('; ') + '. ';
       })();
-      // Image `next` channel — presets are listed by the server whenever the engine is on; `allowed` carries the
-      // tier lock and the key's channel policy, `canUseImageNext` the tool itself.
-      const imageNextAvailable = !!me.modelChannels?.image?.next && (me.qualities?.imageNext?.length ?? 0) > 0;
-      const keyReachesNext = !Array.isArray(me.key.modelChannels) || me.key.modelChannels.includes('next');
-      const imageNextLine = !imageNextAvailable ? ''
-        : me.canUseImageNext === false
-          ? (keyReachesNext
-            ? `${GEN8_IMAGES} (generate_image with imageModel "next", up to 6 references) are locked on this tier — a submit answers 403 with the tier that opens it; use the default image model (3 references). `
-            : `${GEN8_IMAGES} (generate_image with imageModel "next") are closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit); use the default image model (3 references) or a key without a channel policy. `)
-          : `${GEN8_IMAGES} (generate_image with imageModel "next", up to 6 refCreationIds, legible text, priced on render time at about 1.1–1.9× the Gen 7.2 preset): ` + presetLine('imageNext');
-      const durationLine = (() => {
-        const list = me.videoDurations ?? [];
-        if (list.length === 0) return '';
-        return 'Video durations: ' + list.map(d => `${d.label}${d.recommended ? ' (recommended)' : ''}${d.locked ? ' (locked)' : ''}`).join(', ') +
-          (me.defaultVideoDuration ? `; default ${me.defaultVideoDuration}s. ` : '. ');
+      const imageNextLine = (() => {
+        const state = nextState('image');
+        if (state !== 'distinct') return nextSummary('image') + ' ';
+        if (me.canUseImageNext === false) {
+          return keyReachesNext
+            ? `${nextSummary('image')} It is locked on this tier — a submit answers 403 with the tier that opens it. `
+            : `${nextSummary('image')} It is closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit). `;
+        }
+        const list = presetList(me.qualities?.imageNext, imageCapped);
+        return `${nextSummary('image')}${list ? ` With imageModel "next": ${list}.` : ''} `;
       })();
+
+      const imageLine = `${head('image', 'generate_image')}: ${presetList(me.qualities?.image, imageCapped) || 'no presets listed'}. `;
+      const videoLine = me.canUseVideo === false
+        ? `${head('video', 'generate_video')}: locked on this tier — see Dashboard → Tiers. `
+        : `${head('video', 'generate_video')}: ` +
+          [presetList(me.qualities?.video, videoCapped), durationList(me.videoDurations, me.defaultVideoDuration)].filter(Boolean).join('; ') + '. ';
+
+      const recommendedLength = (me.videoDurations ?? []).find(d => d.recommended && !d.locked)?.value
+        ?? (me.videoDurations ?? []).find(d => d.value === me.defaultVideoDuration && !d.locked)?.value
+        ?? (me.videoDurations ?? []).find(d => !d.locked)?.value;
+      const imageAdvice = presetAdvice(me.qualities?.image, '', imageCapped);
+      const videoAdvice = me.canUseVideo === false ? undefined
+        : presetAdvice(me.qualities?.video, recommendedLength !== undefined ? ` at ${recommendedLength} s` : '', videoCapped);
+
+      const families = engineFamilies(labels, channels);
+      const about = `2DAI runs its own ${families ? `${families} models` : 'models'}, and unlike others, we don't resell model access. ` +
+        'All our models originate from the open-source community or our own R&D — we then ' +
+        'disassemble, modify, fine-tune and optimize them to align with our legacy and 2DAI❤️ART ' +
+        'lines. They also run on our own private cloud network.';
+      const engineText = (kind: 'video' | 'image', ch: 'default' | 'next'): string => {
+        const e = engines[kind][ch];
+        if (ch === 'next') {
+          const state = nextState(kind);
+          if (state === 'closed') return 'closed — kept for the next engine';
+          if (state === 'same') return `${e!.label} — same engine as the default channel, until the next channel closes`;
+        }
+        return e ? describeEngine(kind, e) : 'closed';
+      };
+
       return ok(
         `Account ${me.username ?? me.userId} — $${me.creditUsd.toFixed(2)} credit, tier ${me.tier}. ` +
-        `Key "${me.key.label}" has scopes [${me.key.scopes.join(', ')}]; ${capLine}. ` +
-        presetLine('image') + imageNextLine + presetLine('video') + durationLine + nextLine +
-        (me.canUseVideo === false ? 'Video is locked on this tier — see Dashboard → Tiers. ' : '') +
+        `Key "${me.key.label}" has scopes [${me.key.scopes.join(', ')}]; ${capLine}. ` + ceilingLine +
+        imageLine + imageNextLine + videoLine + videoNextLine +
         `Prompts up to ${me.promptMaxChars ?? 3000} characters on this account${me.promptMaxCharsNext ? ` (${me.promptMaxCharsNext.tier} raises it to ${me.promptMaxCharsNext.max})` : ''}. ` +
-        `Powered by 2DAI's Gen 7.2 model on the 2DAI Private Cloud${nextAvailable || imageNextAvailable ? ` — and the ${GEN8_LABEL} engines` : ''}${nextAvailable ? `, ${GEN8_VIDEO} (the next video engine with sound, generate_video videoModel "next")` : ''}${imageNextAvailable ? `, ${GEN8_IMAGES} (generate_image imageModel "next")` : ''}.`,
+        `Powered by 2DAI's own ${families ? `${families} models` : 'models'} on the 2DAI Private Cloud.`,
         {
           userId: me.userId,
           username: me.username,
@@ -91,21 +180,22 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           ...(me.canUseVideo !== undefined ? { canUseVideo: me.canUseVideo } : {}),
           ...(me.canUseImageNext !== undefined ? { canUseImageNext: me.canUseImageNext } : {}),
           ...(me.modelChannels ? { modelChannels: me.modelChannels } : {}),
-          ...(nextAvailable ? { videoDurationsNext: me.videoDurationsNext, defaultVideoDurationNext: me.defaultVideoDurationNext } : {}),
+          ...(me.modelLabels ? { modelLabels: me.modelLabels } : {}),
+          ...(videoNextOpen ? { videoDurationsNext: me.videoDurationsNext, defaultVideoDurationNext: me.defaultVideoDurationNext } : {}),
           recommendation: {
-            image: 'max — best balance of detail and price; ultimate — highest resolution for final masters',
-            video: 'ultra at 5 seconds — best coherence for the price; ultimate — 1080p, longest wait',
+            ...(imageAdvice ? { image: imageAdvice } : {}),
+            ...(videoAdvice ? { video: videoAdvice } : {}),
             promptMaxChars: me.promptMaxChars ?? 3000,
             ...(me.promptMaxCharsNext ? { promptMaxCharsNext: me.promptMaxCharsNext } : {}),
           },
           platform: {
-            model: 'Gen 7.2',
-            ...(nextAvailable || imageNextAvailable ? { previews: [...(nextAvailable ? [`${GEN8_VIDEO} (videoModel "next")`] : []), ...(imageNextAvailable ? [`${GEN8_IMAGES} (imageModel "next")`] : [])] } : {}),
+            ...(engines.video.default || engines.image.default ? { model: (engines.video.default ?? engines.image.default)!.label } : {}),
+            engines: {
+              video: { default: engineText('video', 'default'), next: engineText('video', 'next') },
+              image: { default: engineText('image', 'default'), next: engineText('image', 'next') },
+            },
             privateCloud: true,
-            about: "We currently use our Gen 7.2 model, and unlike others, we don't resell model access. " +
-                   "All our models originate from the open-source community or our own R&D — we then " +
-                   "disassemble, modify, fine-tune and optimize them to align with our legacy and 2DAI❤️ART " +
-                   "lines. They also run on our own private cloud network.",
+            about,
           },
         },
       );

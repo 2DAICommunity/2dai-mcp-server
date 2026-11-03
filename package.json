@@ -1,6 +1,6 @@
 {
   "name": "2dai-mcp-server",
-  "version": "2.1.4",
+  "version": "2.2.0",
   "description": "MCP server for 2DAI — let Claude, Cursor, Cline and Windsurf generate images and video, upload references and organise your cloud drive on your own 2DAI account.",
   "type": "module",
   "bin": {
@@ -19,6 +19,7 @@
     "dist",
     "skills",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "engines": {

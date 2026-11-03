@@ -3,7 +3,6 @@ import {
   TierError, NsfwRejectedError, QueueLimitError, NotFoundError, RateLimitError,
   ValidationError, GenerationFailedError, TimeoutError,
 } from '2dai-cloud-sdk';
-import { GEN8_VIDEO } from './tools/engine-labels.js';
 
 /** Turns an SDK error into one sentence the model can both relay and act on.
  *  Every tool returns these as `isError: true` results rather than throwing —
@@ -34,11 +33,10 @@ export function describeError(err: unknown): string {
   }
   if (err instanceof TierError) {
     // The server names the first tier that opens the option and writes the sentence; nothing was charged.
-    const tool = err.tool;
-    const fallback = tool === 'image-next' ? ' Use generate_image without imageModel "next" (Gen 7.2, up to 3 references) meanwhile.'
-      : tool === 'video-next' ? ' Use generate_video without videoModel "next" meanwhile.' : '';
     const opens = err.requiredTierName ? ` It opens at ${err.requiredTierName}.` : '';
-    return `Your tier does not include this option${err.message ? ` — ${err.message}` : '.'}${err.message?.includes('opens at') ? '' : opens}${fallback} See Dashboard → Tiers.`;
+    const said = err.message ?? '';
+    const next = /nothing was charged/i.test(said) ? ' Pick an allowed option from get_account.' : ' Nothing was charged — pick an allowed option from get_account.';
+    return `Your tier does not include this option${said ? ` — ${said}` : '.'}${/\bopens? at\b/.test(said) ? '' : opens}${next} See Dashboard → Tiers.`;
   }
   if (err instanceof QueueLimitError) {
     return 'Too many generations already running on this account. Wait for one to finish, or poll with check_generation.';
@@ -96,14 +94,23 @@ export function describeError(err: unknown): string {
       return 'INVALID_AUDIO_REF: audioCreationId must be an audio creation of this account — an MP3 stored with upload_audio, not an image or a clip. Nothing was charged.';
     }
     if (err.code === 'IMAGE_MODEL_UNAVAILABLE' || err.code === 'VIDEO_MODEL_UNAVAILABLE') {
-      return `${err.code}: that model channel is not available on this server right now. Nothing was charged — submit on the default model.`;
+      const kind = err.code === 'VIDEO_MODEL_UNAVAILABLE' ? 'video' : 'image';
+      const said = serverSentence(err);
+      return said ? `${err.code}: ${said} Nothing was charged.`
+        : `${err.code}: that ${kind} channel is closed. Nothing was charged — submit again without ${kind}Model (get_account → platform.engines lists the open channels).`;
+    }
+    if (err.code === 'INVALID_DURATION') {
+      const allowed = (err as any).details?.allowed;
+      const list = Array.isArray(allowed) && allowed.length ? ` This channel renders ${allowed.join(', ')} s.` : '';
+      return `INVALID_DURATION: that clip length is not offered on this channel.${list} Nothing was charged — pick an unlocked length from get_account → videoDurations.`;
     }
     if (err.code === 'TOO_MANY_REFS') {
       const d = (err as any).details ?? {};
-      return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references (got ${d.got ?? '?'}). Nothing was charged. generate_image takes 3 on the default model and 6 with imageModel "next" (Holder and up).`;
+      return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references here (got ${d.got ?? '?'}). Nothing was charged — drop references to fit (get_account → platform.engines gives the cap of each channel).`;
     }
     if (err.code === 'AUDIO_REF_NEXT_ONLY') {
-      return `AUDIO_REF_NEXT_ONLY: an audio reference only works on ${GEN8_VIDEO} — set videoModel "next". Nothing was charged.`;
+      return `AUDIO_REF_NEXT_ONLY: ${serverSentence(err) ?? 'the engine behind this video channel renders no sound, so it takes no audio reference.'}` +
+        ' Nothing was charged — drop audioCreationId, or use a channel whose engine renders sound (get_account → platform.engines).';
     }
     if (err.code === 'AUDIO_TOO_LONG') {
       const max = (err as any).details?.maxSeconds;
@@ -127,6 +134,17 @@ export function describeError(err: unknown): string {
     }
     return `Invalid request${err.message ? `: ${err.message}` : ''}.`;
   }
+  if (err instanceof ApiError && err.code === 'GENERATION_PAUSED') {
+    return `GENERATION_PAUSED: ${serverSentence(err) ?? 'generation is paused for a short maintenance.'} Nothing was charged or queued — try again in a few minutes, do not loop.`;
+  }
+  if (err instanceof ApiError && (err.code === 'KEY_POLICY_QUALITY' || err.code === 'KEY_POLICY_DURATION')) {
+    const d = (err.details ?? {}) as { maxQuality?: unknown; maxVideoDurationSec?: unknown };
+    const cap = err.code === 'KEY_POLICY_QUALITY'
+      ? (typeof d.maxQuality === 'string' ? ` at ${d.maxQuality}` : '')
+      : (typeof d.maxVideoDurationSec === 'number' ? ` at ${d.maxVideoDurationSec} s` : '');
+    const what = err.code === 'KEY_POLICY_QUALITY' ? 'quality preset' : 'clip length';
+    return `${err.code}: this API key's policy caps the ${what}${cap} (see get_account → key). Nothing was charged — submit at or under the cap, or use a key without that policy.`;
+  }
   if (err instanceof ApiError && err.code === 'KEY_POLICY_CHANNEL') {
     const ch = (err as any).details?.channel;
     return `KEY_POLICY_CHANNEL: this API key's policy does not reach the "${ch ?? 'next'}" model channel (see get_account → key.modelChannels). Nothing was charged — submit on the default model, or use a key without a channel policy.`;
@@ -136,4 +154,10 @@ export function describeError(err: unknown): string {
   }
   if (err instanceof Error) return err.message;
   return String(err);
+}
+
+/** The server's own sentence for a code (it says what to send instead), or undefined when the SDK only had its fallback. */
+function serverSentence(err: ApiError): string | undefined {
+  const m = (err.details as { message?: unknown } | undefined)?.message;
+  return typeof m === 'string' && m.trim() ? m.trim() : undefined;
 }

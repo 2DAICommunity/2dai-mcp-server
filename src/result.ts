@@ -137,6 +137,9 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
     ...(quality ? { quality } : {}),
     ...(channelOf(state.videoModel, creation?.videoModel, 'videoModel')),
     ...(channelOf(state.imageModel, creation?.imageModel, 'imageModel')),
+    ...(typeof creation?.aiModel === 'string' && creation.aiModel ? { aiModel: creation.aiModel } : {}),
+    ...(engineOf(state, raw, 'videoEngine')),
+    ...(engineOf(state, raw, 'imageEngine')),
     ...(durationSeconds !== undefined ? { durationSeconds } : {}),
     ...(fps !== undefined ? { fps } : {}),
     ...(state.startedAt ? { startedAt: state.startedAt } : {}),
@@ -152,7 +155,14 @@ export function generationSummary(state: QueueState, creation?: Creation): Recor
   };
 }
 
-/** The model channel a job ran on (`next` = Gen8), from the queue state or the hydrated row — only when one is known. */
+/** The engine that rendered the job (`gen7`, `gen8`, …), from the queue state or the hydrated row, when the server sends it. */
+function engineOf(state: QueueState, raw: Record<string, unknown>, key: 'videoEngine' | 'imageEngine'): Record<string, string> {
+  const v = (state as unknown as Record<string, unknown>)[key] ?? raw[key];
+  return typeof v === 'string' && v ? { [key]: v } : {};
+}
+
+/** The model channel a job was submitted on, from the queue state or the hydrated row — only when one is known. The
+ *  engine that rendered it is `videoEngine` / `imageEngine`: a channel can change engine. */
 function channelOf(fromState: string | undefined, fromCreation: string | undefined, key: 'videoModel' | 'imageModel'): Record<string, string> {
   const v = fromState ?? fromCreation;
   return v === 'default' || v === 'next' ? { [key]: v } : {};
@@ -202,12 +212,28 @@ export async function hydrateForResponse(
   return { creation, preview };
 }
 
-export function pendingResult(ticket: QueueTicket, lastStatus?: string): CallToolResult {
+export function pendingResult(ticket: QueueTicket, lastStatus?: string, note = ''): CallToolResult {
+  const duration = acceptedDuration(ticket);
   return ok(
-    `Still running after the wait budget — this is normal for video and high-quality images. ` +
+    `Still running after the wait budget — this is normal for video and high-quality images.${note} ` +
     `Call check_generation with queueId "${ticket.queueId}" to collect it.`,
-    { queueId: ticket.queueId, status: lastStatus ?? ticket.status, pending: true },
+    { queueId: ticket.queueId, status: lastStatus ?? ticket.status, pending: true, ...(duration !== undefined ? { duration } : {}) },
   );
+}
+
+/** The clip length the server accepted, in seconds (`duration` on a video submit answer), when it sends one. Read
+ *  loosely: the SDK may not type it. */
+export function acceptedDuration(ticket: unknown): number | undefined {
+  const d = (ticket as { duration?: unknown } | undefined)?.duration;
+  return typeof d === 'number' && Number.isFinite(d) && d > 0 ? d : undefined;
+}
+
+/** " Length 5 s." — plus a neutral note when the server set it shorter than the length asked or the source's. */
+export function lengthNote(seconds: number | undefined, before?: { seconds: number; of: 'asked' | 'source' }): string {
+  if (seconds === undefined) return '';
+  if (!before || !(seconds < before.seconds)) return ` Length ${seconds} s.`;
+  return ` Length ${seconds} s, shorter than the ${before.seconds} s ${before.of === 'asked' ? 'asked' : 'of the source'}: ` +
+    'the server set a length this tier, key and engine allow.';
 }
 
 /** Readable outcome of a finished queue state: the server's `errorMessage` (current servers),
