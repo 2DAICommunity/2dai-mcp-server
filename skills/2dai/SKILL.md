@@ -51,7 +51,7 @@ surcharge per reference; `get_stats` shows the burn.
 the scene plainly, not as keyword lists. Every reference adds a surcharge. `negativePrompt` is applied at every preset.
 
 **Channels.** `generate_image` and `generate_video` run on the default channel. `next` (`imageModel` / `videoModel`)
-is kept for the next engine: until <date> it serves the same engine as the default channel, after that it is refused
+is kept for the next engine: until 2026-11-17 it serves the same engine as the default channel, after that it is refused
 (`*_MODEL_UNAVAILABLE`, uncharged) until an engine opens it. Leave both unset unless `get_account` shows a distinct
 engine on `next`.
 

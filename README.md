@@ -23,7 +23,7 @@ behind each channel and what it takes (`platform.engines`, today **Gen8.1**):
 - Presets and lengths depend on the tier: `get_account` lists what the account may submit and the best pick open to
   it (`recommendation`), so read it instead of probing.
 
-`next` (`imageModel` / `videoModel`) is kept for the next engine. Until <date> it serves the same engine as the
+`next` (`imageModel` / `videoModel`) is kept for the next engine. Until 2026-11-17 it serves the same engine as the
 default channel; after that it answers `VIDEO_MODEL_UNAVAILABLE` / `IMAGE_MODEL_UNAVAILABLE`, uncharged, until an
 engine opens it. Leave both parameters unset, and reconnect the server in your host after updating (a running session
 keeps the old tool descriptions).

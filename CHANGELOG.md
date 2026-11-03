@@ -1,10 +1,8 @@
 # Changelog
 
-## 2.2.0 (<date>)
+## 2.2.0 (2026-11-03)
 
-<!-- DRAFT, owner review before the tag: replace the <date> placeholders (release and switch day; closing day of the `next` channels). Needs 2dai-cloud-sdk ^3.2.0 in package.json and the lock before the tag. -->
-
-The default channels move to the Gen8 engines (server switch of <date>). No tool description or instruction writes an
+The default channels move to the Gen8 engines (server switch of 2026-11-03). No tool description or instruction writes an
 engine version any more: get_account reads them from the server at call time, so the next switch needs no release.
 
 Behaviour:
@@ -45,5 +43,5 @@ Server instructions: a CHANNELS paragraph (leave `next` unset unless get_account
 engine-neutral STACK paragraph that points to get_account.
 
 Migration: reconnect the MCP in the host after the update (a running session keeps the old tool descriptions). Agents
-that send `videoModel "next"` / `imageModel "next"` should drop it before <date>: after that day it answers
+that send `videoModel "next"` / `imageModel "next"` should drop it before 2026-11-17: after that day it answers
 `VIDEO_MODEL_UNAVAILABLE` / `IMAGE_MODEL_UNAVAILABLE`, uncharged, until a new engine opens it.
