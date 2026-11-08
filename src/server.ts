@@ -61,7 +61,7 @@ export function createServer(config: Config, client: Client): McpServer {
         'generation reply — call get_creation for the caption if the user needs it. Never present a ' +
         'restricted creation as a failure; hand over the viewUrl for review. ' +
         'SHAPE: the output shape comes only from `aspectRatio` (default square 1:1), never from the prompt — ' +
-        'phone wallpaper or story = 9:16, tablet portrait = 3:4, desktop or laptop = 16:9; "widescreen" alone means ' +
+        'phone wallpaper or lock screen = 9:19.5 (fills a modern phone), story or Reels = 9:16, tablet portrait = 3:4, desktop or laptop = 16:9; "widescreen" alone means ' +
         'landscape 16:9, and 4:3 / 3:2 are landscape, never a phone. generate_wallpaper dimensions are landscape only. ' +
         'CHANNELS: generate_image and generate_video run on the default channel; "next" (imageModel / videoModel) is ' +
         'the channel kept for the next engine. Leave it unset unless get_account shows a distinct engine on it — a ' +

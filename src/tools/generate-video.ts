@@ -30,8 +30,8 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
           .describe('"default" (default) or "next", the channel kept for the next video engine. Each channel runs the engine get_account names (platform.engines); "next" answers VIDEO_MODEL_UNAVAILABLE, uncharged, while it is closed. Omit it unless get_account shows a distinct engine on "next".'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
           .describe('Up to 6 more reference creations after the first frame (characters, props, places), read by an engine with sound (get_account → platform.engines); each adds a surcharge. An engine that animates the first frame only ignores them.'),
-        aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16']).optional()
-          .describe('Output shape. "auto" (default) keeps the first frame\'s ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait. An engine that animates the first frame only keeps its ratio.'),
+        aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16', '9:19.5']).optional()
+          .describe('Output shape. "auto" (default) keeps the first frame\'s ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; a clip that fills a phone screen edge to edge (live wallpaper) = "9:19.5"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait. An engine that animates the first frame only keeps its ratio.'),
         audioCreationId: z.string().length(32).optional()
           .describe('An audio creation from upload_audio (an MP3 of the account) used as the clip\'s audio reference, on an engine with sound; counts as one more reference for the price. Rejected when the engine behind the channel renders no sound (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).'),
         audioUse: z.enum(['music', 'voice']).optional()

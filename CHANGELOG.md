@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.3.0 (2026-11-08)
+
+New aspect ratio `"9:19.5"`, phone full screen: a picture or a clip that fills a modern phone screen edge to edge in
+portrait (iPhone since the X, Galaxy S). Requires `2dai-cloud-sdk` 3.3.0.
+
+- `generate_image`, `generate_with_refs` and `generate_in_artistic_style` accept `aspectRatio: "9:19.5"`;
+  `generate_video` accepts it in its own list.
+- The ratio guide and the server instructions now send a phone wallpaper or lock screen to `"9:19.5"`; stories, Reels
+  and TikTok stay `"9:16"`. The quality still decides the resolution, so the price does not change.
+
 ## 2.2.0 (2026-11-03)
 
 The default channels move to the Gen8 engines (server switch of 2026-11-03). No tool description or instruction writes an
