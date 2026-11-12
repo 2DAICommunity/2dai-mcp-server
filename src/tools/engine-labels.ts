@@ -10,11 +10,9 @@ export type ModelChannels = { video?: Partial<Record<Channel, string | null>>; i
 const ENGINE_FACTS: Record<'video' | 'image', Record<string, string>> = {
   video: {
     gen8: 'clips with sound at 24 fps, the first frame plus up to 6 refCreationIds, aspectRatio and an optional audio reference',
-    gen7: 'silent clips from the first frame only (refCreationIds, aspectRatio and audio references are not used)',
   },
   image: {
     gen8: 'up to 6 refCreationIds read natively, legible text in the picture, long literal prompts, negativePrompt applied at every preset',
-    gen7: 'up to 3 refCreationIds, negativePrompt not applied',
   },
 };
 
@@ -32,7 +30,7 @@ export function describeEngine(kind: 'video' | 'image', engine: { id: string; la
   return facts ? `${engine.label} — ${facts}` : engine.label;
 }
 
-/** The distinct engine labels behind the open channels, in a readable list ("Gen8.1", "Gen7.2 and Gen8.1"). */
+/** The distinct engine labels behind the open channels, in a readable list ("Gen8.1", or "A and B" when they differ). */
 export function engineFamilies(labels?: ModelLabels, channels?: ModelChannels): string {
   const names: string[] = [];
   for (const kind of ['video', 'image'] as const) {

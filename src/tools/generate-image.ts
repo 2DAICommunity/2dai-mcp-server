@@ -27,7 +27,7 @@ export const registerGenerateImage: RegisterTool = (server, ctx) => {
         imageModel: z.enum(['default', 'next']).optional()
           .describe('"default" (default) or "next", the channel kept for the next image engine (tier-gated: get_account → canUseImageNext). Each channel runs the engine get_account names (platform.engines); "next" answers IMAGE_MODEL_UNAVAILABLE, uncharged, while it is closed.'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
-          .describe('Reference creations the image should follow (characters, products, places): up to 6, or the lower cap of the engine behind the channel (get_account → platform.engines). Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
+          .describe('Reference creations the image should follow (characters, products, places): up to 6, read natively by the engine behind the channel (get_account → platform.engines). Strict cap (TOO_MANY_REFS before any charge); each reference adds a surcharge.'),
         aspectRatio: z.enum(ASPECT_RATIOS).optional().describe(ASPECT_RATIO_HINT),
         quality: z.enum(['auto', 'fast', 'normal', 'high', 'max', 'ultra', 'ultimate']).optional().describe('Quality preset id — "fast", "normal", "high", "max", "ultra", "ultimate" — or "auto" (default, picked by tier). Pick an allowed id of get_account → qualities.image; recommendation.image names the best pick open to this account. Higher presets are tier-gated.'),
         style: z.string().optional().describe('Style id, or "auto" (default) to let the server choose.'),

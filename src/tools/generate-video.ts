@@ -29,11 +29,11 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         videoModel: z.enum(['default', 'next']).optional()
           .describe('"default" (default) or "next", the channel kept for the next video engine. Each channel runs the engine get_account names (platform.engines); "next" answers VIDEO_MODEL_UNAVAILABLE, uncharged, while it is closed. Omit it unless get_account shows a distinct engine on "next".'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
-          .describe('Up to 6 more reference creations after the first frame (characters, props, places), read by an engine with sound (get_account → platform.engines); each adds a surcharge. An engine that animates the first frame only ignores them.'),
+          .describe('Up to 6 more reference creations after the first frame (characters, props, places), read by the engine behind the channel (get_account → platform.engines); each adds a surcharge.'),
         aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16', '9:19.5']).optional()
-          .describe('Output shape. "auto" (default) keeps the first frame\'s ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; a clip that fills a phone screen edge to edge (live wallpaper) = "9:19.5"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait. An engine that animates the first frame only keeps its ratio.'),
+          .describe('Output shape. "auto" (default) keeps the first frame\'s ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; a clip that fills a phone screen edge to edge (live wallpaper) = "9:19.5"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait.'),
         audioCreationId: z.string().length(32).optional()
-          .describe('An audio creation from upload_audio (an MP3 of the account) used as the clip\'s audio reference, on an engine with sound; counts as one more reference for the price. Rejected when the engine behind the channel renders no sound (AUDIO_REF_NEXT_ONLY) and when the creation is not an audio file (INVALID_AUDIO_REF).'),
+          .describe('An audio creation from upload_audio (an MP3 of the account) used as the clip\'s audio reference, on an engine with sound; counts as one more reference for the price. Rejected when the creation is not an audio file (INVALID_AUDIO_REF).'),
         audioUse: z.enum(['music', 'voice']).optional()
           .describe('How the audio reference is used: "music" = soundtrack / sound design (default), "voice" = a voice sample the speaking character follows.'),
         duration: z.number().optional().describe('Clip length in exact seconds: a value of get_account → videoDurations that is not locked. Omit it for the account default (defaultVideoDuration). Any other length is refused with INVALID_DURATION, uncharged.'),

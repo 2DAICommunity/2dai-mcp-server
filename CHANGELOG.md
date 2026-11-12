@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.3.1 (2026-11-11)
+
+The next channel closed on 2026-11-11 (server switch): `videoModel "next"` / `imageModel "next"` answer
+`VIDEO_MODEL_UNAVAILABLE` / `IMAGE_MODEL_UNAVAILABLE`, uncharged, until a new engine opens them; get_account already
+reports it as closed. The default channels keep the Gen8.1 engines. No schema change. Requires `2dai-cloud-sdk` 3.3.1.
+
+- get_account no longer describes a Gen7 engine in `platform.engines`: an engine this release does not know shows its
+  bare label.
+- Tool descriptions without the Gen7 clauses: `generate_video` (`refCreationIds`, `aspectRatio`, `audioCreationId`) and
+  `generate_image` (`refCreationIds`).
+- README and `skills/2dai/SKILL.md`: `next` is described as closed since 2026-11-11.
+
+Reconnect the MCP in the host after the update (a running session keeps the old tool descriptions).
+
 ## 2.3.0 (2026-11-08)
 
 New aspect ratio `"9:19.5"`, phone full screen: a picture or a clip that fills a modern phone screen edge to edge in
