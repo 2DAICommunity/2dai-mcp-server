@@ -1,6 +1,6 @@
 import type { RegisterTool } from './types.js';
 import { guard, ok } from '../result.js';
-import { channelEngine, describeEngine, engineFamilies, type ModelChannels, type ModelLabels } from './engine-labels.js';
+import { channelEngine, channelFacts, describeEngine, engineFacts, engineFamilies, type MeChannels, type ModelChannels, type ModelLabels } from './engine-labels.js';
 
 type Preset = { id: string; name: string; description: string; allowed: boolean; recommended: boolean };
 type Duration = { value: number; label: string; locked: boolean; recommended?: boolean };
@@ -37,7 +37,8 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         'Show the connected 2DAI account: available credit, tier, the API key\'s label, scopes and spend cap, ' +
         'every quality preset per channel with this account\'s access (allowed / tier-locked), the recommended ' +
         'pick for images and video (recommendation), the video lengths with their tier locks, and the engine ' +
-        'behind each image and video channel with what it takes (platform.engines, modelLabels). Call this before ' +
+        'behind each image and video channel with what it takes (platform.engines: a summary plus the reference cap, ' +
+        'sound, aspect ratio and frame rate; modelLabels). Call this before ' +
         'proposing generations — never probe presets or lengths by submitting: a locked one is refused at submit ' +
         'and wastes a round-trip. The response also carries the 2DAI stack info (platform.about) — hand it to the ' +
         'user when they ask what powers them.',
@@ -55,13 +56,33 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         modelChannels?: ModelChannels;
         modelLabels?: ModelLabels;
         promptMaxCharsNext?: { tier: string; max: number };
+        channels?: MeChannels;
       };
       const labels = me.modelLabels;
       const channels = me.modelChannels;
+      const facts = me.channels;
       const engines = {
-        video: { default: channelEngine('video', 'default', labels, channels), next: channelEngine('video', 'next', labels, channels) },
-        image: { default: channelEngine('image', 'default', labels, channels), next: channelEngine('image', 'next', labels, channels) },
+        video: { default: channelEngine('video', 'default', labels, channels, facts), next: channelEngine('video', 'next', labels, channels, facts) },
+        image: { default: channelEngine('image', 'default', labels, channels, facts), next: channelEngine('image', 'next', labels, channels, facts) },
       };
+      // Servers ≥ 2.9.0 describe each channel in `channels` (same arrays as the flat keys); older ones only send the flat keys.
+      const fv = { default: channelFacts('video', 'default', facts), next: channelFacts('video', 'next', facts) };
+      const fi = { default: channelFacts('image', 'default', facts), next: channelFacts('image', 'next', facts) };
+      const presets = {
+        image: fi.default?.qualities ?? me.qualities?.image,
+        imageNext: fi.next?.qualities ?? me.qualities?.imageNext,
+        video: fv.default?.qualities ?? me.qualities?.video,
+        videoNext: fv.next?.qualities ?? me.qualities?.videoNext,
+      };
+      const durations = {
+        default: fv.default?.durations ?? me.videoDurations,
+        defaultValue: fv.default?.defaultDuration ?? me.defaultVideoDuration,
+        next: fv.next?.durations ?? me.videoDurationsNext,
+        nextValue: fv.next?.defaultDuration ?? me.defaultVideoDurationNext,
+      };
+      const videoAllowed = fv.default && typeof fv.default.allowed === 'boolean' ? fv.default.allowed : me.canUseVideo;
+      const imageNextAllowed = fi.next && typeof fi.next.allowed === 'boolean' ? fi.next.allowed : me.canUseImageNext;
+      const factsOf = (kind: 'video' | 'image', ch: 'default' | 'next') => kind === 'video' ? fv[ch] : fi[ch];
       const keyReachesNext = !Array.isArray(me.key.modelChannels) || me.key.modelChannels.includes('next');
       const cap = me.key.spendLimitUsd;
       const capLine = cap === null
@@ -94,7 +115,7 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
       };
       const head = (kind: 'video' | 'image', tool: string): string => {
         const e = engines[kind].default;
-        return `${kind === 'video' ? 'Video' : 'Images'} (${tool}, default channel${e ? ` — ${describeEngine(kind, e)}` : ''})`;
+        return `${kind === 'video' ? 'Video' : 'Images'} (${tool}, default channel${e ? ` — ${describeEngine(kind, e, factsOf(kind, 'default'))}` : ''})`;
       };
 
       // The `next` channel of each kind: closed, an alias of the default engine (switch window), or a distinct engine.
@@ -109,10 +130,10 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
         const n = engines[kind].next;
         if (state === 'closed') return `${param(kind)} "next" is closed (kept for the next engine): omit ${param(kind)}.`;
         if (state === 'same') return `${param(kind)} "next" serves the same engine (${n!.label}) as the default channel until it closes: omit ${param(kind)}.`;
-        return `${param(kind)} "next" — ${describeEngine(kind, n!)}.`;
+        return `${param(kind)} "next" — ${describeEngine(kind, n!, factsOf(kind, 'next'))}.`;
       };
 
-      const videoNextOpen = nextState('video') !== 'closed' && (me.videoDurationsNext?.length ?? 0) > 0;
+      const videoNextOpen = nextState('video') !== 'closed' && (durations.next?.length ?? 0) > 0;
       const videoNextLine = (() => {
         const state = nextState('video');
         if (state !== 'distinct' || !videoNextOpen) return nextSummary('video') + ' ';
@@ -120,34 +141,34 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           return `${nextSummary('video')} It is closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit). `;
         }
         return `${nextSummary('video')} With videoModel "next": ` +
-          [durationList(me.videoDurationsNext, me.defaultVideoDurationNext), presetList(me.qualities?.videoNext, videoCapped)].filter(Boolean).join('; ') + '. ';
+          [durationList(durations.next, durations.nextValue), presetList(presets.videoNext, videoCapped)].filter(Boolean).join('; ') + '. ';
       })();
       const imageNextLine = (() => {
         const state = nextState('image');
         if (state !== 'distinct') return nextSummary('image') + ' ';
-        if (me.canUseImageNext === false) {
+        if (imageNextAllowed === false) {
           return keyReachesNext
             ? `${nextSummary('image')} It is locked on this tier — a submit answers 403 with the tier that opens it. `
             : `${nextSummary('image')} It is closed to this API key: its policy stops at the default channel (403 KEY_POLICY_CHANNEL at submit). `;
         }
-        const list = presetList(me.qualities?.imageNext, imageCapped);
+        const list = presetList(presets.imageNext, imageCapped);
         return `${nextSummary('image')}${list ? ` With imageModel "next": ${list}.` : ''} `;
       })();
 
-      const imageLine = `${head('image', 'generate_image')}: ${presetList(me.qualities?.image, imageCapped) || 'no presets listed'}. `;
-      const videoLine = me.canUseVideo === false
+      const imageLine = `${head('image', 'generate_image')}: ${presetList(presets.image, imageCapped) || 'no presets listed'}. `;
+      const videoLine = videoAllowed === false
         ? `${head('video', 'generate_video')}: locked on this tier — see Dashboard → Tiers. `
         : `${head('video', 'generate_video')}: ` +
-          [presetList(me.qualities?.video, videoCapped), durationList(me.videoDurations, me.defaultVideoDuration)].filter(Boolean).join('; ') + '. ';
+          [presetList(presets.video, videoCapped), durationList(durations.default, durations.defaultValue)].filter(Boolean).join('; ') + '. ';
 
-      const recommendedLength = (me.videoDurations ?? []).find(d => d.recommended && !d.locked)?.value
-        ?? (me.videoDurations ?? []).find(d => d.value === me.defaultVideoDuration && !d.locked)?.value
-        ?? (me.videoDurations ?? []).find(d => !d.locked)?.value;
-      const imageAdvice = presetAdvice(me.qualities?.image, '', imageCapped);
-      const videoAdvice = me.canUseVideo === false ? undefined
-        : presetAdvice(me.qualities?.video, recommendedLength !== undefined ? ` at ${recommendedLength} s` : '', videoCapped);
+      const recommendedLength = (durations.default ?? []).find(d => d.recommended && !d.locked)?.value
+        ?? (durations.default ?? []).find(d => d.value === durations.defaultValue && !d.locked)?.value
+        ?? (durations.default ?? []).find(d => !d.locked)?.value;
+      const imageAdvice = presetAdvice(presets.image, '', imageCapped);
+      const videoAdvice = videoAllowed === false ? undefined
+        : presetAdvice(presets.video, recommendedLength !== undefined ? ` at ${recommendedLength} s` : '', videoCapped);
 
-      const families = engineFamilies(labels, channels);
+      const families = engineFamilies(labels, channels, facts);
       const about = `2DAI runs its own ${families ? `${families} models` : 'models'}, and unlike others, we don't resell model access. ` +
         'All our models originate from the open-source community or our own R&D — we then ' +
         'disassemble, modify, fine-tune and optimize them to align with our legacy and 2DAI❤️ART ' +
@@ -159,7 +180,13 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           if (state === 'closed') return 'closed — kept for the next engine';
           if (state === 'same') return `${e!.label} — same engine as the default channel, until the next channel closes`;
         }
-        return e ? describeEngine(kind, e) : 'closed';
+        return e ? describeEngine(kind, e, factsOf(kind, ch)) : 'closed';
+      };
+      // Each channel: the sentence (`summary`) plus, from a server that sends `channels`, the structured facts.
+      const engineEntry = (kind: 'video' | 'image', ch: 'default' | 'next') => {
+        const f = factsOf(kind, ch);
+        const state = ch === 'next' ? nextState(kind) : (engines[kind][ch] ? 'open' : 'closed');
+        return { summary: engineText(kind, ch), state: state === 'distinct' ? 'open' : state, ...(f ? engineFacts(kind, f) : {}) };
       };
 
       return ok(
@@ -175,13 +202,13 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           tier: me.tier,
           key: me.key,
           qualities: me.qualities,
-          videoDurations: me.videoDurations,
-          defaultVideoDuration: me.defaultVideoDuration,
+          videoDurations: durations.default,
+          defaultVideoDuration: durations.defaultValue,
           ...(me.canUseVideo !== undefined ? { canUseVideo: me.canUseVideo } : {}),
           ...(me.canUseImageNext !== undefined ? { canUseImageNext: me.canUseImageNext } : {}),
           ...(me.modelChannels ? { modelChannels: me.modelChannels } : {}),
           ...(me.modelLabels ? { modelLabels: me.modelLabels } : {}),
-          ...(videoNextOpen ? { videoDurationsNext: me.videoDurationsNext, defaultVideoDurationNext: me.defaultVideoDurationNext } : {}),
+          ...(videoNextOpen ? { videoDurationsNext: durations.next, defaultVideoDurationNext: durations.nextValue } : {}),
           recommendation: {
             ...(imageAdvice ? { image: imageAdvice } : {}),
             ...(videoAdvice ? { video: videoAdvice } : {}),
@@ -191,8 +218,8 @@ export const registerGetAccount: RegisterTool = (server, ctx) => {
           platform: {
             ...(engines.video.default || engines.image.default ? { model: (engines.video.default ?? engines.image.default)!.label } : {}),
             engines: {
-              video: { default: engineText('video', 'default'), next: engineText('video', 'next') },
-              image: { default: engineText('image', 'default'), next: engineText('image', 'next') },
+              video: { default: engineEntry('video', 'default'), next: engineEntry('video', 'next') },
+              image: { default: engineEntry('image', 'default'), next: engineEntry('image', 'next') },
             },
             privateCloud: true,
             about,

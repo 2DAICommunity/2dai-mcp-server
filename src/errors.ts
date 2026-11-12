@@ -36,7 +36,11 @@ export function describeError(err: unknown): string {
     const opens = err.requiredTierName ? ` It opens at ${err.requiredTierName}.` : '';
     const said = err.message ?? '';
     const next = /nothing was charged/i.test(said) ? ' Pick an allowed option from get_account.' : ' Nothing was charged — pick an allowed option from get_account.';
-    return `Your tier does not include this option${said ? ` — ${said}` : '.'}${/\bopens? at\b/.test(said) ? '' : opens}${next} See Dashboard → Tiers.`;
+    // Servers ≥ 2.9.0 say which family / channel refused (`details.family`, `details.channel`).
+    const d = (err as { details?: { family?: unknown; channel?: unknown } }).details ?? {};
+    const param = d.family === 'video' ? 'videoModel' : d.family === 'image' ? 'imageModel' : undefined;
+    const channelHint = d.channel === 'next' && param ? ` The default channel may be open to this tier: omit ${param}.` : '';
+    return `Your tier does not include this option${said ? ` — ${said}` : '.'}${/\bopens? at\b/.test(said) ? '' : opens}${next}${channelHint} See Dashboard → Tiers.`;
   }
   if (err instanceof QueueLimitError) {
     return 'Too many generations already running on this account. Wait for one to finish, or poll with check_generation.';
@@ -106,7 +110,7 @@ export function describeError(err: unknown): string {
     }
     if (err.code === 'TOO_MANY_REFS') {
       const d = (err as any).details ?? {};
-      return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references here (got ${d.got ?? '?'}). Nothing was charged — drop references to fit (get_account → platform.engines gives the cap of each channel).`;
+      return `TOO_MANY_REFS: this tool takes at most ${d.max ?? '?'} references here (got ${d.got ?? '?'}). Nothing was charged — drop references to fit (get_account → platform.engines.<video|image>.<channel>.maxRefCreationIds gives the cap of each channel).`;
     }
     if (err.code === 'AUDIO_REF_NEXT_ONLY') {
       return `AUDIO_REF_NEXT_ONLY: ${serverSentence(err) ?? 'the engine behind this video channel renders no sound, so it takes no audio reference.'}` +

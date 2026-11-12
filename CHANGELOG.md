@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.4.0 (2026-11-12)
+
+get_account describes each channel from the server (`/v1/me.channels`, server 2.9.0), so a new engine on a channel is
+described without a release. No tool schema change: `refCreationIds` stays capped at 6 on `generate_image` and
+`generate_video` (Gen8 video = the first frame plus up to 6 references). Requires `2dai-cloud-sdk` 3.4.0.
+
+- `platform.engines.<video|image>.<default|next>` is now an object: `summary` (the sentence that was there before),
+  `state` (`open`, `same` = alias of the default engine, `closed`) and, from a server that sends `channels`, the
+  structured facts of the engine: `engine`, `label`, `allowed`, `maxRefCreationIds` (the first frame is not counted),
+  `negativePrompt`, `traits`, and for video `sound`, `audioReference`, `audioUses`, `aspectRatio`, `outputFps`,
+  `defaultDuration`.
+- The engine sentence is built from those facts (reference cap, sound, frame rate, aspect ratio, traits); the built-in
+  Gen8 table is only a fallback for older servers. Presets, lengths and access (`allowed`) are read from `channels` when
+  present, else from the flat keys, which the server keeps (`qualities`, `videoDurations`, `canUseVideo`, …).
+- A tier refusal on the `next` channel (`TOOL_NOT_ALLOWED_FOR_TIER` with `channel: "next"`) adds that the default
+  channel may be open (omit `videoModel` / `imageModel`). Since server 2.9.0 the refusal's `tool` is the family,
+  `video` or `image`.
+- `TOO_MANY_REFS` points at `platform.engines.<kind>.<channel>.maxRefCreationIds`.
+
+Reconnect the MCP in the host after the update (a running session keeps the old tool descriptions).
+
 ## 2.3.2 (2026-11-12)
 
 `organise_creation` says plainly which actions are reversible. The title and the description now say that every

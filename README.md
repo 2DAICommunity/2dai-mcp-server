@@ -168,7 +168,8 @@ per-key spend cap — the server reports actionable errors when a cap or scope b
   or `fast` (video) is tier-gated — `get_account` lists what the connected account may submit and the best pick open
   to it (`recommendation`), so never probe presets.
 - **Channels and engines.** `get_account` names the engine behind each image and video channel and what it takes
-  (`platform.engines`); `next` (`imageModel` / `videoModel`) is the channel kept for the next engine — leave it unset
+  (`platform.engines`: a `summary` sentence plus, from server 2.9.0, the reference cap `maxRefCreationIds`, sound,
+  aspect ratio and frame rate); `next` (`imageModel` / `videoModel`) is the channel kept for the next engine — leave it unset
   unless `get_account` shows a distinct engine there. A closed channel is refused, uncharged.
 - **Lengths.** A clip runs at the length asked, in exact seconds: `get_account` lists the lengths the account may
   submit (`videoDurations`, tier lock resolved); any other length is refused with `INVALID_DURATION`, uncharged.

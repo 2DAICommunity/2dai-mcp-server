@@ -29,7 +29,7 @@ export const registerGenerateVideo: RegisterTool = (server, ctx) => {
         videoModel: z.enum(['default', 'next']).optional()
           .describe('"default" (default) or "next", the channel kept for the next video engine. Each channel runs the engine get_account names (platform.engines); "next" answers VIDEO_MODEL_UNAVAILABLE, uncharged, while it is closed. Omit it unless get_account shows a distinct engine on "next".'),
         refCreationIds: z.array(z.string().length(32)).max(6).optional()
-          .describe('Up to 6 more reference creations after the first frame (characters, props, places), read by the engine behind the channel (get_account → platform.engines); each adds a surcharge.'),
+          .describe('Up to 6 more reference creations after the first frame (characters, props, places), within the cap of the engine behind the channel (get_account → platform.engines.video.<channel>.maxRefCreationIds); each adds a surcharge.'),
         aspectRatio: z.enum(['auto', '1:1', '3:2', '4:3', '16:9', '21:9', '2:3', '3:4', '9:16', '9:19.5']).optional()
           .describe('Output shape. "auto" (default) keeps the first frame\'s ratio. Vertical phone video (stories, Reels, TikTok) = "9:16"; a clip that fills a phone screen edge to edge (live wallpaper) = "9:19.5"; landscape / widescreen = "16:9"; "4:3" and "3:2" are landscape, "3:4" and "2:3" portrait.'),
         audioCreationId: z.string().length(32).optional()

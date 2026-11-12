@@ -13,8 +13,9 @@ every result lands in the account's cloud drive as a *creation* with a 32-char i
 
 1. `get_account` — credit, tier, key scopes and spend cap (and the key's own ceilings, when it has a policy),
    **the presets this account may submit**, the video lengths with their tier locks, the best pick open to the
-   account (`recommendation`) and **the engine behind each channel** with what it takes (`platform.engines`). Never
-   probe presets or lengths by submitting: a locked one is refused at submit (403) and wastes a round-trip.
+   account (`recommendation`) and **the engine behind each channel** with what it takes (`platform.engines`: `summary`,
+   `maxRefCreationIds`, sound, aspect ratio). Never probe presets or lengths by submitting: a locked one is refused
+   at submit (403) and wastes a round-trip.
 2. Budget: write down credit and the key cap. Costs are charged at submit and refunded on failure.
 3. `list_creations` if the account already holds references (brand masters, character sheets).
 
