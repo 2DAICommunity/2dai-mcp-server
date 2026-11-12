@@ -8,17 +8,18 @@ export const registerOrganiseCreation: RegisterTool = (server, ctx) => {
   server.registerTool(
     'organise_creation',
     {
-      title: 'Move, trash, restore, delete or like creations',
+      title: 'Organise creations: move, like, trash or restore (all reversible), delete (permanent)',
       description:
-        'Organise creations on the cloud drive (needs the "manage" scope). "move" needs a folderId ' +
-        '(or "root" to ungroup). "trash" is reversible; "restore" undoes it. "like"/"unlike" SET the ' +
-        'like state — idempotent, a repeat is harmless, and any public creation can be liked too. ' +
-        '"batch-trash"/"batch-restore" act on up to 100 ids in one call (reversible, like their ' +
-        'single-creation forms). "delete" is PERMANENT, stays one creation per call by design, and ' +
-        'only works on a creation already in trash — trash it first, and only delete when the user ' +
-        'explicitly asked for permanent removal.',
+        'Organise creations on the cloud drive (needs the "manage" scope). Every action is reversible ' +
+        'except "delete". "trash" deletes nothing: like the Trash of a desktop, it moves the creation to ' +
+        'the drive\'s trash, where "restore" brings it back (until the trash retention empties it). ' +
+        '"batch-trash"/"batch-restore" do the same for up to 100 ids in one call. "move" needs a folderId ' +
+        '(or "root" to ungroup). "like"/"unlike" SET the like state — idempotent, a repeat is harmless, ' +
+        'and any public creation can be liked too. "delete" is the ONLY permanent action: it erases a ' +
+        'creation that is already in trash, stored media included, one creation per call by design — ' +
+        'use it only when the user explicitly asked for permanent removal.',
       inputSchema: {
-        action: z.enum(ACTIONS).describe('What to do.'),
+        action: z.enum(ACTIONS).describe('What to do. Reversible: move, like, unlike, trash, restore, batch-trash, batch-restore. Permanent: delete only.'),
         creationId: z.string().length(32).optional().describe('The creation to act on (every action except batch-*).'),
         folderId: z.string().optional().describe('move only — target folder id, or "root" to detach.'),
         ids: z.array(z.string().length(32)).min(1).max(100).optional()

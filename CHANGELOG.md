@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.2 (2026-11-12)
+
+`organise_creation` says plainly which actions are reversible. The title and the description now say that every
+action except `delete` can be undone: `trash` deletes nothing, works like a desktop Trash, and `restore` brings the
+creation back until the trash retention empties it. `delete` is the only permanent action. The `action` parameter lists
+the reversible actions and the permanent one. Some permission checks read the old wording as a permanent deletion and
+refused a plain `trash`. No schema or behaviour change.
+
 ## 2.3.1 (2026-11-11)
 
 The next channel closed on 2026-11-11 (server switch): `videoModel "next"` / `imageModel "next"` answer

@@ -128,7 +128,7 @@ none). `upload_image` / `upload_audio` take `base64`. `GET /health` reports
 | `list_folders` | Page through the account's folders | read | no |
 | `list_artistic_styles` | The curated artistic styles available to `generate_in_artistic_style` | read | no |
 | `manage_folder` | Folder CRUD + favorites, poster, and sidebar groups (create/rename/delete/move-to-group/list-groups) | manage | no |
-| `organise_creation` | Move / trash / restore / like / unlike one creation; `batch-trash` / `batch-restore` up to 100; permanent delete stays one-at-a-time | manage | no |
+| `organise_creation` | Move / trash / restore / like / unlike one creation (all reversible: trash deletes nothing); `batch-trash` / `batch-restore` up to 100; `delete`, the only permanent action, stays one-at-a-time | manage | no |
 | `publish_creation` | Publish / unpublish a creation on the public feed | publish | no |
 | `get_stats` | One consolidated stats read: counters, streak, storage, 30/90-day generation volume + spend, top refs/styles/keywords | read | no |
 | `get_wallet_status` | $2DAI balance, USD credit, effective tier + the four signals it derives from | finance | no |
