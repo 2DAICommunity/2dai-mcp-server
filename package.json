@@ -58,7 +58,7 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "2dai-cloud-sdk": "^3.3.1",
+    "2dai-cloud-sdk": "^3.4.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
